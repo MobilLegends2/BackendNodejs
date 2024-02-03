@@ -21,7 +21,7 @@ Clone the Repository
 
 bash
 Copy code
-git clone https://github.com/yourproject/backend-nodejs.git && cd backend-nodejs
+git clone https://github.com/MobilLegends2/BackendNodejs.git && cd backend-nodejs
 Install Dependencies
 
 bash
