@@ -1,6 +1,6 @@
 🌟 Backend Node.js - Modern & Scalable 🌟
 <div align="center">
-  <img src="your-logo-link.png" alt="Project Logo" width="200" style="border-radius: 20px;"/>
+  <img src="https://www.mediafire.com/file/mi2zqcrfuvpj9rv/417252929_749464816712177_4692086713599374877_n+(1).jpg/file" alt="Project Logo" width="200" style="border-radius: 20px;"/>
   <h2>Empowering Your Applications with Cutting-Edge Backend Technologies</h2>
   <p>Efficient. Secure. Scalable.</p>
   <a href="link-to-documentation" style="background-color: #007BFF; color: white; padding: 8px 15px; border-radius: 5px; text-decoration: none; font-size: 18px;">Explore Documentation</a>
