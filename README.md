@@ -1,5 +1,5 @@
 
-Backend en Node.js pour SDK de Messagerie
+# Backend en Node.js pour SDK de Messagerie
 Description
 Ce backend en Node.js est conçu pour alimenter le SDK de messagerie multiplateforme, fournissant une infrastructure robuste pour les fonctionnalités de messagerie instantanée. Il s'agit d'un composant clé du SDK, permettant la messagerie texte, l'échange de médias, les notifications push, le chiffrement de bout en bout, et la gestion de groupes, entre autres. Ce backend est conçu pour être performant, sécurisé, et facilement intégrable avec les applications Flutter, iOS, et Android.
 
