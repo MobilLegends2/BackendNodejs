@@ -1,4 +1,4 @@
-# 🌟 Backend Node.js - Modern & Scalable 🌟
+🌟 Backend Node.js - Modern & Scalable 🌟
 <div align="center">
   <img src="your-logo-link.png" alt="Project Logo" width="200" style="border-radius: 20px;"/>
   <h2>Empowering Your Applications with Cutting-Edge Backend Technologies</h2>
