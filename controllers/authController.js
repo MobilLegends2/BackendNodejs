@@ -16,10 +16,13 @@ export const register = async (req, res) => {
   }
 };
 
+// Fonction pour connecter un utilisateur
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
+
+
     if (!user) {
       return res.status(404).json({ message: 'User not found.' });
     }
@@ -27,9 +30,16 @@ export const login = async (req, res) => {
     if (!validPassword) {
       return res.status(401).json({ message: 'Incorrect password.' });
     }
-    const accessToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET);
-    res.json({ accessToken });
+    // Générer un token d'accès contenant l'identifiant de l'utilisateur
+    const accessToken = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '15m' });
+
+    // Générer un token de rafraîchissement
+    const refreshToken = jwt.sign({ userId: user._id }, JWT_REFRESH_SECRET, { expiresIn: '7d' });
+
+    // Renvoyer à la fois le token d'accès et le token de rafraîchissement à l'utilisateur
+    res.json({ accessToken, refreshToken });
   } catch (error) {
+    // En cas d'erreur, renvoyer une réponse d'erreur
     console.error(error);
     res.status(500).json({ message: 'Error logging in user.' });
   }
