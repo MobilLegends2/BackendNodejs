@@ -32,7 +32,6 @@ export const login = async (req, res) => {
     }
     // Générer un token d'accès contenant l'identifiant de l'utilisateur
     const accessToken = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '15m' });
-
     // Générer un token de rafraîchissement
     const refreshToken = jwt.sign({ userId: user._id }, JWT_REFRESH_SECRET, { expiresIn: '7d' });
 
@@ -42,5 +41,33 @@ export const login = async (req, res) => {
     // En cas d'erreur, renvoyer une réponse d'erreur
     console.error(error);
     res.status(500).json({ message: 'Error logging in user.' });
+  }
+};
+
+// Fonction pour générer un nouveau token d'accès à partir d'un refreshToken
+export const generateAccessToken = async (req, res) => {
+  try {
+    // Récupérer le refreshToken de la requête
+    const { refreshToken } = req.body;
+
+    // Vérifier si le refreshToken est présent
+    if (!refreshToken) {
+      return res.status(400).json({ message: 'Refresh token is missing.' });
+    }
+    // Vérifier si le refreshToken est valide
+    jwt.verify(refreshToken, JWT_REFRESH_SECRET, (err, decoded) => {
+      if (err) {
+        return res.status(401).json({ message: 'Invalid refresh token.' });
+      }
+
+      // Si le refreshToken est valide, générer un nouveau accessToken
+      const accessToken = jwt.sign({ userId: decoded.userId }, JWT_SECRET, { expiresIn: '15m' });
+
+      // Renvoyer le nouveau accessToken
+      res.json({ accessToken });
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error generating access token.' });
   }
 };
