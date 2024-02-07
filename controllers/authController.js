@@ -2,7 +2,7 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
-
+import { JWT_SECRET, JWT_REFRESH_SECRET } from '../config.js';
 export const register = async (req, res) => {
   try {
     const { username, email, password } = req.body;
@@ -34,7 +34,9 @@ export const login = async (req, res) => {
     const accessToken = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '15m' });
     // Générer un token de rafraîchissement
     const refreshToken = jwt.sign({ userId: user._id }, JWT_REFRESH_SECRET, { expiresIn: '7d' });
-
+ // Enregistrer le token de rafraîchissement dans la base de données
+ user.refreshToken = refreshToken;
+ await user.save();
     // Renvoyer à la fois le token d'accès et le token de rafraîchissement à l'utilisateur
     res.json({ accessToken, refreshToken });
   } catch (error) {
