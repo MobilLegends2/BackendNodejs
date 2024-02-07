@@ -1,8 +1,7 @@
-// authMiddleware.js
-const jwt = require('jsonwebtoken');
-const { JWT_SECRET } = require('./config');
+import jwt from 'jsonwebtoken';
+import { JWT_SECRET } from '../config';
 
-exports.authenticateUser = (req, res, next) => {
+export const authenticateUser = (req, res, next) => {
   const token = req.header('Authorization');
   if (!token) {
     return res.status(401).json({ success: false, message: 'Unauthorized - No token provided' });
@@ -21,7 +20,7 @@ exports.authenticateUser = (req, res, next) => {
   } 
 };
 
-exports.authorizeAdmin = (req, res, next) => {
+export const authorizeAdmin = (req, res, next) => {
   if (req.user.role !== 'admin') {
     return res.status(403).json({ message: 'Forbidden - Admin access required' });
   }

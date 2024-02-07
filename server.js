@@ -2,11 +2,8 @@ import express from "express";
 import mongoose from "mongoose";
 import morgan from "morgan";
 import cors from "cors";
-import { notFoundError } from "./middlewares/error-handler.js";
-import { errorHandler } from "./middlewares/error-handler.js";
+import { notFoundError, errorHandler } from "./middlewares/error-handler.js";
 import authRoutes from './routes/authRoutes.js';
-
-
 
 // Creating an express app
 const app = express();
@@ -24,13 +21,12 @@ mongoose.set('debug', true);
 mongoose.Promise = global.Promise;
 
 // Connecting to the MongoDB database
-mongoose.connect(`mongodb://127.0.0.1:27017/${databaseName}`)
-    .then(() => {
-        console.log(`Connected to ${databaseName}`);
-    })
-    .catch((error) => {
-        console.log(error);
-    });
+try {
+  await mongoose.connect(`mongodb://127.0.0.1:27017/${databaseName}`);
+  console.log(`Connected to ${databaseName}`);
+} catch (error) {
+  console.error(error);
+}
 
 // Enabling Cross-Origin Resource Sharing
 app.use(cors());
@@ -46,7 +42,6 @@ app.use(express.urlencoded({ extended: true }));
 
 // Serving static files (images) from the 'public/images' directory
 app.use('/img', express.static('public/images'));
-
 
 // Importing the routes for the 'tests' resource
 app.use('/api/auth', authRoutes);
