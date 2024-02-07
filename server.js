@@ -4,6 +4,7 @@ import morgan from "morgan";
 import cors from "cors";
 import { notFoundError } from "./middlewares/error-handler.js";
 import { errorHandler } from "./middlewares/error-handler.js";
+import authRoutes from './routes/authRoutes.js';
 
 
 
@@ -14,7 +15,7 @@ const app = express();
 const PORT = 9090 || process.env.PORT;
 
 // Specifying the MongoDB database name
-const databaseName = 'examen2024';
+const databaseName = 'CrossCHat';
 
 // Enabling debug mode for mongoose
 mongoose.set('debug', true);
@@ -48,7 +49,7 @@ app.use('/img', express.static('public/images'));
 
 
 // Importing the routes for the 'tests' resource
-
+app.use('/api/auth', authRoutes);
 
 // Using custom middleware for handling 404 errors
 app.use(notFoundError);
