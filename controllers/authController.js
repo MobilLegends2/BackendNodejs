@@ -30,8 +30,8 @@ export const login = async (req, res) => {
       return res.status(401).json({ message: 'Incorrect password.' });
     }
 
-    const accessToken = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '15m' });
-    const refreshToken = jwt.sign({ userId: user._id }, JWT_REFRESH_SECRET, { expiresIn: '7d' });
+    const accessToken = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '1m' });
+    const refreshToken = jwt.sign({ userId: user._id }, JWT_REFRESH_SECRET, { expiresIn: '10m' });
 
     user.refreshToken = refreshToken;
     await user.save();
@@ -62,28 +62,49 @@ export const generateAccessToken = (refreshToken, res) => {
     res.status(500).json({ message: 'Error generating access token.' });
   }
 };
-
 export const signInUsingToken = async (req, res) => {
   try {
     const { accessToken } = req.body;
-
+    console.log(accessToken);
+    if (!accessToken) {
+      throw new Error('No access token provided');
+    }
     // Verify the access token
     jwt.verify(accessToken, JWT_SECRET, async (err, decoded) => {
       if (err) {
-        return res.status(401).json({ message: 'Invalid access token.' });
+        if (err.name === 'TokenExpiredError') {
+          // If access token is expired, attempt to refresh it using the refresh token
+          const decodedRefreshToken = jwt.decode(accessToken);
+          const userId = decodedRefreshToken.userId;
+          const user = await User.findById(userId);
+          
+          if (!user) {
+            return res.status(404).json({ message: 'User not found.' });
+          }
+
+          // Check if the refresh token is valid
+          jwt.verify(user.refreshToken, JWT_REFRESH_SECRET, async (err, decoded) => {
+            if (err) {
+              return res.status(401).json({ message: 'Invalid refresh token.' });
+            }
+
+            // Generate a new access token using the refresh token
+            const newAccessToken = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '15m' });
+            return res.json({ accessToken: newAccessToken });
+          });
+        } else {
+          return res.status(401).json({ message: 'Invalid access token.' });
+        }
       }
 
-      // Get the user ID from the decoded token
+      // If access token is valid, proceed with normal flow
       const userId = decoded.userId;
-
-      // Find the user in the database
       const user = await User.findById(userId);
 
       if (!user) {
         return res.status(404).json({ message: 'User not found.' });
       }
 
-      // Generate a new access token
       generateAccessToken(user.refreshToken, res);
     });
   } catch (error) {
