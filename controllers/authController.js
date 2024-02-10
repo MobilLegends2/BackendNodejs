@@ -43,10 +43,8 @@ export const login = async (req, res) => {
   }
 };
 
-export const generateAccessToken = async (req, res) => {
+export const generateAccessToken = (refreshToken, res) => {
   try {
-    const { refreshToken } = req.body;
-
     if (!refreshToken) {
       return res.status(400).json({ message: 'Refresh token is missing.' });
     }
@@ -62,5 +60,34 @@ export const generateAccessToken = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error generating access token.' });
+  }
+};
+
+export const signInUsingToken = async (req, res) => {
+  try {
+    const { accessToken } = req.body;
+
+    // Verify the access token
+    jwt.verify(accessToken, JWT_SECRET, async (err, decoded) => {
+      if (err) {
+        return res.status(401).json({ message: 'Invalid access token.' });
+      }
+
+      // Get the user ID from the decoded token
+      const userId = decoded.userId;
+
+      // Find the user in the database
+      const user = await User.findById(userId);
+
+      if (!user) {
+        return res.status(404).json({ message: 'User not found.' });
+      }
+
+      // Generate a new access token
+      generateAccessToken(user.refreshToken, res);
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error refreshing access token.' });
   }
 };
