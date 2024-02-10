@@ -6,6 +6,13 @@ import { JWT_SECRET, JWT_REFRESH_SECRET } from '../config.js';
 export const register = async (req, res) => {
   try {
     const { username, email, password } = req.body;
+    
+    // Vérifiez si l'e-mail existe déjà dans la base de données
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Email already exists.' });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = new User({ username, email, password: hashedPassword });
     await user.save();
