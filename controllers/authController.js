@@ -1,8 +1,15 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import nodemailer from 'nodemailer';
 import { JWT_SECRET, JWT_REFRESH_SECRET } from '../config.js';
-
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: 'aymen.zouaoui@esprit.tn',
+    pass: '223AMT0874a',
+  },
+});
 export const register = async (req, res) => {
   try {
     const { username, email, password } = req.body;
@@ -15,6 +22,100 @@ export const register = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = new User({ username, email, password: hashedPassword });
+    
+    // Send welcome email
+    const mailOptions = {
+      from: 'your-email@gmail.com',
+      to: user.email,
+      subject: 'Welcome to your application',
+      text: 'Thank you for registering on our application. Welcome!',
+      html: `
+      <!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bienvenue sur CrossChat, Développeur !</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333333;
+        }
+        .wrapper {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border: 1px solid #dddddd;
+            border-radius: 5px;
+        }
+        .header {
+            background-color: #007bff;
+            color: #ffffff;
+            padding: 10px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            padding: 20px;
+            text-align: left;
+            line-height: 1.5;
+        }
+        .footer {
+            font-size: 12px;
+            text-align: center;
+            padding: 15px;
+            background-color: #f4f4f4;
+            border-radius: 0 0 5px 5px;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        @media screen and (max-width: 600px) {
+            .wrapper {
+                width: 95%;
+                margin: 20px auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="header">
+            <h2>Bienvenue sur CrossChat, ${username} !</h2>
+        </div>
+        <div class="content">
+            <p>Votre compte développeur a été créé avec succès !</p>
+            <p>Votre accès à notre ensemble complet d'outils et de documentation est maintenant activé. Vous pouvez commencer à explorer les ressources et intégrer nos solutions dans vos projets.</p>
+            <p>Pour toute question ou support, veuillez consulter notre <a href="#" style="color: #007bff; text-decoration: none;">centre d'aide</a>.</p>
+            <a href="#" class="button" onclick="activateAccount()">Activer Mon Compte</a>
+        </div>
+        <div class="footer">
+            © 2024 CrossChat. Tous droits réservés.
+        </div>
+    </div>
+</body>
+</html>
+
+    `,
+    };
+
+    transporter.sendMail(mailOptions, (emailError, info) => {
+      if (emailError) {
+        console.error(emailError);
+      } else {
+        console.log('Welcome email sent: ' + info.response);
+      }
+    });
     await user.save();
     res.status(201).json({ message: 'User registered successfully.' });
   } catch (error) {
