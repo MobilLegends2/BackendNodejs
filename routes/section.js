@@ -1,5 +1,7 @@
 import express from 'express';
 import Section from '../models/section.js';
+import { deleteSectionById } from '../controllers/section.js';
+
 
 const router = express.Router();
 
@@ -54,14 +56,8 @@ router.patch('/:id', getSection, async (req, res) => {
   }
 });
 
-router.delete('/:id', getSection, async (req, res) => {
-  try {
-    await res.section.remove();
-    res.json({ message: 'Section deleted' });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
+router.delete("/:id", deleteSectionById);
+
 
 async function getSection(req, res, next) {
   try {
