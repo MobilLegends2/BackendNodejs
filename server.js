@@ -13,7 +13,6 @@ const PORT = 9090 || process.env.PORT;
 
 // Specifying the MongoDB database name
 const databaseName = 'CrossCHat';
-// test
 
 // Enabling debug mode for mongoose
 mongoose.set('debug', true);
