@@ -21,7 +21,7 @@ export const register = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({ name, email, password: hashedPassword, status: 'busy', avatar: 'brian-hughes.jpg' });
+    const user = new User({ name, email, password: hashedPassword, status: 'busy', avatar: 'brian-hughes.jpg', role: 'user' });
 
     // Send welcome email
     const mailOptions = {
