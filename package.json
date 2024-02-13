@@ -6,7 +6,7 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js",
+    "start": "nodemon server.js",
     "dev": "nodemon server.js"
   },
   "author": "Ksiksi Arafet",
@@ -26,6 +26,7 @@
     "multer-storage-cloudinary": "^4.0.0",
     "node-schedule": "^2.1.1",
     "nodemailer": "^6.9.7",
+    "nodemon": "^3.0.3",
     "openai": "^4.24.0",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
