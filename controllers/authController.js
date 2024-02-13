@@ -231,3 +231,25 @@ function isRefreshTokenExpired(refreshToken) {
 }
 
 
+export const unlockSession = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword) {
+      return res.status(500).json({ message: 'Incorrect password.' });
+    }
+
+  
+
+    res.json({ message: 'Unlock session email sent successfully.' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error unlocking session.' });
+  }
+};
