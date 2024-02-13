@@ -13,7 +13,7 @@ const transporter = nodemailer.createTransport({
 export const register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
-    
+
     // Vérifiez si l'e-mail existe déjà dans la base de données
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -21,8 +21,8 @@ export const register = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({ name, email, password: hashedPassword ,status:'busy',avatar:'brian-hughes.jpg'});
-    
+    const user = new User({ name, email, password: hashedPassword, status: 'busy', avatar: 'brian-hughes.jpg' });
+
     // Send welcome email
     const mailOptions = {
       from: 'your-email@gmail.com',
@@ -137,21 +137,29 @@ export const login = async (req, res) => {
     if (!validPassword) {
       return res.status(401).json({ message: 'Incorrect password.' });
     }
-
-    const accessToken = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '1m' });
     const refreshToken = jwt.sign({ userId: user._id }, JWT_REFRESH_SECRET, { expiresIn: '10m' });
+    const accessToken = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '1m' });
 
+
+    const userWithoutSensitiveData = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      avatar: user.avatar,
+      status: user.status
+
+    };
     user.refreshToken = refreshToken;
     await user.save();
 
-    res.json({ accessToken, refreshToken,user });
+    res.json({ accessToken, refreshToken, user: userWithoutSensitiveData });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error logging in user.' });
   }
 };
 
-export const generateAccessToken = (user,refreshToken, res) => {
+export const generateAccessToken = (user, refreshToken, res) => {
   try {
     if (!refreshToken) {
       return res.status(400).json({ message: 'Refresh token is missing.' });
@@ -163,8 +171,15 @@ export const generateAccessToken = (user,refreshToken, res) => {
       }
 
       const accessToken = jwt.sign({ userId: decoded.userId }, JWT_SECRET, { expiresIn: '1m' });
-
-      res.json({ accessToken,user});
+      const userWithoutSensitiveData = {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        avatar: user.avatar,
+        status: user.status
+  
+      };
+      res.json({ accessToken, user:userWithoutSensitiveData });
     });
   } catch (error) {
     console.error(error);
@@ -178,23 +193,24 @@ export const signInUsingToken = async (req, res) => {
     if (!accessToken) {
       throw new Error('No access token provided');
     }
-    
+
     // Verify the access token
     const decoded = await jwt.verify(accessToken, JWT_SECRET);
     const userId = decoded.userId;
-    
+
     // Proceed with normal flow
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: 'User not found.' });
     }
-    
+
     if (isRefreshTokenExpired(user.refreshToken)) {
       return res.status(401).json({ message: 'Refresh token expired.' });
     }
-    
-    generateAccessToken(user,user.refreshToken, res);
-  
+
+
+    generateAccessToken(user, user.refreshToken, res);
+
   } catch (error) {
     console.error(error);
     if (error.name === 'TokenExpiredError') {
@@ -213,4 +229,5 @@ function isRefreshTokenExpired(refreshToken) {
   }
   return false;
 }
+
 
