@@ -12,7 +12,7 @@ const transporter = nodemailer.createTransport({
 });
 export const register = async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const { name, email, password } = req.body;
     
     // Vérifiez si l'e-mail existe déjà dans la base de données
     const existingUser = await User.findOne({ email });
@@ -21,7 +21,7 @@ export const register = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({ username, email, password: hashedPassword });
+    const user = new User({ name, email, password: hashedPassword ,status:'busy',avatar:'brian-hughes.jpg'});
     
     // Send welcome email
     const mailOptions = {
@@ -91,7 +91,7 @@ export const register = async (req, res) => {
 <body>
     <div class="wrapper">
         <div class="header">
-            <h2>Bienvenue sur CrossChat, ${username} !</h2>
+            <h2>Bienvenue sur CrossChat, ${name} !</h2>
         </div>
         <div class="content">
             <p>Votre compte développeur a été créé avec succès !</p>
@@ -144,14 +144,14 @@ export const login = async (req, res) => {
     user.refreshToken = refreshToken;
     await user.save();
 
-    res.json({ accessToken, refreshToken });
+    res.json({ accessToken, refreshToken,user });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error logging in user.' });
   }
 };
 
-export const generateAccessToken = (refreshToken, res) => {
+export const generateAccessToken = (user,refreshToken, res) => {
   try {
     if (!refreshToken) {
       return res.status(400).json({ message: 'Refresh token is missing.' });
@@ -162,8 +162,9 @@ export const generateAccessToken = (refreshToken, res) => {
         return res.status(401).json({ message: 'Invalid refresh token.' });
       }
 
-      const accessToken = jwt.sign({ userId: decoded.userId }, JWT_SECRET, { expiresIn: '15m' });
-      res.json({ accessToken });
+      const accessToken = jwt.sign({ userId: decoded.userId }, JWT_SECRET, { expiresIn: '1m' });
+
+      res.json({ accessToken,user});
     });
   } catch (error) {
     console.error(error);
@@ -177,46 +178,39 @@ export const signInUsingToken = async (req, res) => {
     if (!accessToken) {
       throw new Error('No access token provided');
     }
+    
     // Verify the access token
-    jwt.verify(accessToken, JWT_SECRET, async (err, decoded) => {
-      if (err) {
-        if (err.name === 'TokenExpiredError') {
-          // If access token is expired, attempt to refresh it using the refresh token
-          const decodedRefreshToken = jwt.decode(accessToken);
-          const userId = decodedRefreshToken.userId;
-          const user = await User.findById(userId);
-          
-          if (!user) {
-            return res.status(404).json({ message: 'User not found.' });
-          }
-
-          // Check if the refresh token is valid
-          jwt.verify(user.refreshToken, JWT_REFRESH_SECRET, async (err, decoded) => {
-            if (err) {
-              return res.status(401).json({ message: 'Invalid refresh token.' });
-            }
-
-            // Generate a new access token using the refresh token
-            const newAccessToken = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '15m' });
-            return res.json({ accessToken: newAccessToken });
-          });
-        } else {
-          return res.status(401).json({ message: 'Invalid access token.' });
-        }
-      }
-
-      // If access token is valid, proceed with normal flow
-      const userId = decoded.userId;
-      const user = await User.findById(userId);
-
-      if (!user) {
-        return res.status(404).json({ message: 'User not found.' });
-      }
-
-      generateAccessToken(user.refreshToken, res);
-    });
+    const decoded = await jwt.verify(accessToken, JWT_SECRET);
+    const userId = decoded.userId;
+    
+    // Proceed with normal flow
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+    
+    if (isRefreshTokenExpired(user.refreshToken)) {
+      return res.status(401).json({ message: 'Refresh token expired.' });
+    }
+    
+    generateAccessToken(user,user.refreshToken, res);
+  
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Error refreshing access token.' });
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ message: 'Invalid access token.' });
+    } else {
+      res.status(500).json({ message: 'Error refreshing access token.' });
+    }
   }
 };
+
+// Function to check if refresh token is expired
+function isRefreshTokenExpired(refreshToken) {
+  const decoded = jwt.decode(refreshToken);
+  if (!decoded || Date.now() >= decoded.exp * 1000) {
+    return true;
+  }
+  return false;
+}
+
