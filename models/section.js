@@ -18,6 +18,19 @@ const sectionSchema = new Schema(
         descriptionS: {
             type: String,
             required: true
+        },
+        colorLine: {
+            type: Boolean,
+            default: false // Default value for colorLine field
+        },
+        codeBox: {
+            type: Boolean,
+            default: false // Default value for codeBox field
+        },
+        // Add formatOptions field to schema
+        formatOptions: {
+            colorLine: Boolean,
+            codeBox: Boolean
         }
     },
     {
