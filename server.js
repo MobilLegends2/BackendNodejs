@@ -5,7 +5,12 @@ import cors from "cors";
 import { notFoundError, errorHandler } from "./middlewares/error-handler.js";
 import authRoutes from './routes/authRoutes.js';
 import sectionRoutes from './routes/section.js';
+import conversationRoutes from './routes/conversation.js';
+import messageRoutes from './routes/message.js';
+import groupRoutes from './routes/group.js';
+import attachmentRoutes from './routes/attachment.js';
 import categoryRoutes from './routes/category.js';
+
 
 // Creating an express app
 const app = express();
@@ -49,7 +54,10 @@ app.use('/img', express.static('public/images'));
 app.use('/api/auth', authRoutes);
 app.use('/category', categoryRoutes);
 app.use('/section', sectionRoutes);
-
+app.use('/', attachmentRoutes);
+app.use('/', groupRoutes);
+app.use('/', conversationRoutes);
+app.use('/', messageRoutes);
 // Using custom middleware for handling 404 errors
 app.use(notFoundError);
 
