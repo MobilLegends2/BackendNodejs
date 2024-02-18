@@ -9,6 +9,12 @@ const userSchema = new mongoose.Schema({
   status: { type: String },
 });
 
+
+
+userSchema.statics.findByEmail = function(email) {
+  return this.findOne({ email });
+};
+
 const User = mongoose.model('User', userSchema);
 
 export default User;

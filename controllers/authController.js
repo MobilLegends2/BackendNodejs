@@ -401,11 +401,8 @@ existingUser.password = hashedPassword;
 
 
 const client = new OAuth2Client(CLIENT_ID);
-
 export const loginGoogle = async (req, res) => {
   const { credential } = req.body;
-
-  console.log('Received credential:', credential);
 
   // Verify the Google ID token
   try {
@@ -415,13 +412,52 @@ export const loginGoogle = async (req, res) => {
     });
 
     const payload = ticket.getPayload();
-    const userId = payload['sub']; // Extract the user ID
 
-    // You can now use the userId to identify the user in your application
-    console.log('User ID:', userId);
+    // Extract user information from the payload
+    const { email, sub, picture, given_name, family_name } = payload;
 
-    // Send a response to acknowledge receipt
-    res.status(200).json({ message: 'Credential received and verified successfully.' });
+    console.log('User email:', email);
+    console.log('User ID:', sub);
+    console.log('User pic:', picture);
+    console.log('User given_name:', given_name);
+    console.log('User family_name:', family_name);
+
+    // Check if the user already exists in the database
+    let existingUser = await User.findByEmail(email);
+
+    if (!existingUser) {
+      // If the user doesn't exist, create a new user
+      existingUser = new User({
+        name: given_name,
+        email,
+        password: sub, // You may need to handle the password differently for Google sign-in
+        status: 'busy',
+        avatar: picture,
+      });
+
+      // Save the new user to the database
+      await existingUser.save();
+    }
+
+    // Generate JWT tokens for authentication
+    const refreshToken = jwt.sign({ userId: existingUser._id }, JWT_REFRESH_SECRET, { expiresIn: '10m' });
+    const accessToken = jwt.sign({ userId: existingUser._id }, JWT_SECRET, { expiresIn: '1m' });
+
+    // Prepare user data to send back to the client
+    const userWithoutSensitiveData = {
+      _id: existingUser._id,
+      name: existingUser.name,
+      email: existingUser.email,
+      avatar: existingUser.avatar,
+      status: existingUser.status,
+    };
+
+    // Update user's refresh token and save it
+    existingUser.refreshToken = refreshToken;
+    await existingUser.save();
+
+    // Send response with authentication tokens and user data
+    res.json({ accessToken, refreshToken, user: userWithoutSensitiveData });
   } catch (error) {
     console.error('Error verifying Google ID token:', error);
     res.status(400).json({ error: 'Failed to verify Google ID token.' });
