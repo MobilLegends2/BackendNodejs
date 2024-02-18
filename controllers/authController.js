@@ -1,6 +1,9 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import { OAuth2Client } from 'google-auth-library';
+const CLIENT_ID = '754330445896-dfa97rp7o6u0l2aqoue3ajiq71spukvo.apps.googleusercontent.com'; // Replace with your actual Google Client ID
+
 import nodemailer from 'nodemailer';
 import { JWT_SECRET, JWT_REFRESH_SECRET } from '../config.js';
 const transporter = nodemailer.createTransport({
@@ -11,6 +14,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 export const register = async (req, res) => {
+  console.log(res.id_token)
   try {
     const { name, email, password } = req.body;
 
@@ -391,5 +395,35 @@ existingUser.password = hashedPassword;
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error changin user password.' });
+  }
+};
+
+
+
+const client = new OAuth2Client(CLIENT_ID);
+
+export const loginGoogle = async (req, res) => {
+  const { credential } = req.body;
+
+  console.log('Received credential:', credential);
+
+  // Verify the Google ID token
+  try {
+    const ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    const userId = payload['sub']; // Extract the user ID
+
+    // You can now use the userId to identify the user in your application
+    console.log('User ID:', userId);
+
+    // Send a response to acknowledge receipt
+    res.status(200).json({ message: 'Credential received and verified successfully.' });
+  } catch (error) {
+    console.error('Error verifying Google ID token:', error);
+    res.status(400).json({ error: 'Failed to verify Google ID token.' });
   }
 };
