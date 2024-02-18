@@ -1,6 +1,9 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import { OAuth2Client } from 'google-auth-library';
+const CLIENT_ID = '754330445896-dfa97rp7o6u0l2aqoue3ajiq71spukvo.apps.googleusercontent.com'; // Replace with your actual Google Client ID
+
 import nodemailer from 'nodemailer';
 import { JWT_SECRET, JWT_REFRESH_SECRET } from '../config.js';
 const transporter = nodemailer.createTransport({
@@ -11,6 +14,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 export const register = async (req, res) => {
+  console.log(res.id_token)
   try {
     const { name, email, password } = req.body;
 
@@ -391,5 +395,71 @@ existingUser.password = hashedPassword;
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error changin user password.' });
+  }
+};
+
+
+
+const client = new OAuth2Client(CLIENT_ID);
+export const loginGoogle = async (req, res) => {
+  const { credential } = req.body;
+
+  // Verify the Google ID token
+  try {
+    const ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+
+    // Extract user information from the payload
+    const { email, sub, picture, given_name, family_name } = payload;
+
+    console.log('User email:', email);
+    console.log('User ID:', sub);
+    console.log('User pic:', picture);
+    console.log('User given_name:', given_name);
+    console.log('User family_name:', family_name);
+
+    // Check if the user already exists in the database
+    let existingUser = await User.findByEmail(email);
+
+    if (!existingUser) {
+      // If the user doesn't exist, create a new user
+      existingUser = new User({
+        name: given_name,
+        email,
+        password: sub, // You may need to handle the password differently for Google sign-in
+        status: 'busy',
+        avatar: picture,
+      });
+
+      // Save the new user to the database
+      await existingUser.save();
+    }
+
+    // Generate JWT tokens for authentication
+    const refreshToken = jwt.sign({ userId: existingUser._id }, JWT_REFRESH_SECRET, { expiresIn: '10m' });
+    const accessToken = jwt.sign({ userId: existingUser._id }, JWT_SECRET, { expiresIn: '1m' });
+
+    // Prepare user data to send back to the client
+    const userWithoutSensitiveData = {
+      _id: existingUser._id,
+      name: existingUser.name,
+      email: existingUser.email,
+      avatar: existingUser.avatar,
+      status: existingUser.status,
+    };
+
+    // Update user's refresh token and save it
+    existingUser.refreshToken = refreshToken;
+    await existingUser.save();
+
+    // Send response with authentication tokens and user data
+    res.json({ accessToken, refreshToken, user: userWithoutSensitiveData });
+  } catch (error) {
+    console.error('Error verifying Google ID token:', error);
+    res.status(400).json({ error: 'Failed to verify Google ID token.' });
   }
 };
