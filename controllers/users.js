@@ -3,10 +3,13 @@ import User from "../models/User.js";
 export function getAll(req, res) {
   User.find({})
     .then((docs) => {
-      let User = [];
+      let Users = [];
       for (let i = 0; i < docs.length; i++) {
-        User.push({
-          name: docs[i].name,
+        Users.push({
+            userID:docs[i].userID,
+          firstname: docs[i].firstname,
+            lastname: docs[i].lastname,
+            username: docs[i].username,
           email: docs[i].email,
           password: docs[i].password,
           phone: docs[i].phone,
@@ -15,7 +18,7 @@ export function getAll(req, res) {
           role: docs[i].role
         });
       }
-      res.status(200).json({User});
+      res.status(200).json({Users});
     })
     .catch((err) => {
       res.status(500).json({ error: err });
