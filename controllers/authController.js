@@ -13,122 +13,86 @@ const transporter = nodemailer.createTransport({
     user: 'aymen.zouaoui@esprit.tn',
     pass: '223AMT0874a',
   },
-});
+});// Endpoint to activate the user's account
+export const activateAccount = async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    // Verify and decode the activation token
+    const decoded = jwt.verify(token, JWT_SECRET);
+
+    // Extract the user's email from the token
+    const { email } = decoded;
+
+    // Update the user's status to "active" in the database
+    await User.findOneAndUpdate({ email }, { $set: { status: 'active' } });
+
+    // Redirect to the appropriate page after activation
+    res.redirect('http://localhost:4200/'); // Redirect to a confirmation page on the frontend
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ message: 'Invalid or expired token.' });
+  }
+};
+
+// Endpoint to register a new user
 export const register = async (req, res) => {
-  console.log(res.id_token)
   try {
     const { name, email, password } = req.body;
 
-    // Vérifiez si l'e-mail existe déjà dans la base de données
+    // Check if the email already exists in the database
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'Email already exists.' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({ name, email, password: hashedPassword, status: 'busy', avatar: 'brian-hughes.jpg', role: 'user' });
+    // Generate an activation token
+    const activationToken = jwt.sign({ email }, JWT_SECRET, { expiresIn: '1d' });
 
-    // Send welcome email
+    // Send activation email
+    const activationLink = `http://localhost:9090/api/auth/activate/${activationToken}`;
     const mailOptions = {
-      from: 'your-email@gmail.com',
-      to: user.email,
-      subject: 'Welcome to your application',
-      text: 'Thank you for registering on our application. Welcome!',
+      from: 'your-email@gmail.com', // L'expéditeur
+      to: email, // Le destinataire, 'email' doit être défini ailleurs dans votre code
+      subject: 'Activate your account', // Le sujet de l'email
       html: `
-      <!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bienvenue sur CrossChat, Développeur !</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f4;
-            color: #333333;
-        }
-        .wrapper {
-            max-width: 600px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: #ffffff;
-            border: 1px solid #dddddd;
-            border-radius: 5px;
-        }
-        .header {
-            background-color: #007bff;
-            color: #ffffff;
-            padding: 10px;
-            text-align: center;
-            border-radius: 5px 5px 0 0;
-        }
-        .content {
-            padding: 20px;
-            text-align: left;
-            line-height: 1.5;
-        }
-        .footer {
-            font-size: 12px;
-            text-align: center;
-            padding: 15px;
-            background-color: #f4f4f4;
-            border-radius: 0 0 5px 5px;
-        }
-        .button {
-            display: inline-block;
-            padding: 10px 20px;
-            background-color: #28a745;
-            color: #ffffff;
-            text-decoration: none;
-            border-radius: 5px;
-            margin-top: 20px;
-        }
-        @media screen and (max-width: 600px) {
-            .wrapper {
-                width: 95%;
-                margin: 20px auto;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="wrapper">
-        <div class="header">
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 20px auto; padding: 20px; background-color: #ffffff; border: 1px solid #dddddd; border-radius: 5px;">
+          <div style="background-color: #007bff; color: #ffffff; padding: 10px; text-align: center; border-radius: 5px 5px 0 0;">
             <h2>Bienvenue sur CrossChat, ${name} !</h2>
-        </div>
-        <div class="content">
+          </div>
+          <div style="padding: 20px; text-align: left; line-height: 1.5;">
             <p>Votre compte développeur a été créé avec succès !</p>
-            <p>Votre accès à notre ensemble complet d'outils et de documentation est maintenant activé. Vous pouvez commencer à explorer les ressources et intégrer nos solutions dans vos projets.</p>
-            <p>Pour toute question ou support, veuillez consulter notre <a href="#" style="color: #007bff; text-decoration: none;">centre d'aide</a>.</p>
-            <a href="#" class="button" onclick="activateAccount()">Activer Mon Compte</a>
+            <p>Votre accès à notre ensemble complet d'outils et de documentation est maintenant activé. Vous pouvez commencer à explorer les ressources et intégrer notre SDK de messagerie dans vos projets.</p>
+            <p>Le SDK CrossChat vous permet d'ajouter facilement des fonctionnalités de messagerie en temps réel à votre application. Avec une intégration simple, vous pouvez offrir à vos utilisateurs des fonctionnalités de discussion instantanée, de notifications push et bien plus encore.</p>
+            <p>Pour commencer, consultez notre <a href="https://crosschat.com/documentation" style="color: #007bff; text-decoration: none;">documentation</a> et téléchargez le SDK.</p>
+            <a href="${activationLink}" style="display: inline-block; padding: 10px 20px; background-color: #28a745; color: #ffffff; text-decoration: none; border-radius: 5px; margin-top: 20px;">Activer Mon Compte</a>
+          </div>
+          <div style="font-size: 12px; text-align: center; padding: 15px; background-color: #f4f4f4; border-radius: 0 0 5px 5px;">
+            © ${new Date().getFullYear()} CrossChat. Tous droits réservés.
+          </div>
         </div>
-        <div class="footer">
-            © 2024 CrossChat. Tous droits réservés.
-        </div>
-    </div>
-</body>
-</html>
-
-    `,
+      `, // Le corps de l'email en HTML
     };
 
     transporter.sendMail(mailOptions, (emailError, info) => {
       if (emailError) {
         console.error(emailError);
       } else {
-        console.log('Welcome email sent: ' + info.response);
+        console.log('Activation email sent: ' + info.response);
       }
     });
+
+    // Hash the password and save the user
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = new User({ name, email, password: hashedPassword, status: 'busy', avatar: 'brian-hughes.jpg', role: 'user' });
     await user.save();
-    res.status(201).json({ message: 'User registered successfully.' });
+
+    res.status(201).json({ message: 'User registered successfully. Please check your email to activate your account.' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error registering user.' });
   }
 };
-
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
