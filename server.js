@@ -6,6 +6,7 @@ import { notFoundError, errorHandler } from "./middlewares/error-handler.js";
 import authRoutes from './routes/authRoutes.js';
 import sectionRoutes from './routes/section.js';
 import categoryRoutes from './routes/category.js';
+import userRoutes from './routes/users.js';
 
 // Creating an express app
 const app = express();
@@ -14,7 +15,7 @@ const app = express();
 const PORT = 9090 || process.env.PORT;
 
 // Specifying the MongoDB database name
-const databaseName = 'CrossCHat';
+const databaseName = 'CrossChat';
 
 // Enabling debug mode for mongoose
 mongoose.set('debug', true);
@@ -23,8 +24,13 @@ mongoose.set('debug', true);
 mongoose.Promise = global.Promise;
 
 // Connecting to the MongoDB database
+
+
 try {
-  await mongoose.connect(`mongodb://127.0.0.1:27017/${databaseName}`);
+  await mongoose.connect(`mongodb+srv://CrossChat:CrossChat123@crosschat.ekjeexv.mongodb.net/${databaseName}?retryWrites=true&w=majority`, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+  });
   console.log(`Connected to ${databaseName}`);
 } catch (error) {
   console.error(error);
@@ -49,6 +55,7 @@ app.use('/img', express.static('public/images'));
 app.use('/api/auth', authRoutes);
 app.use('/category', categoryRoutes);
 app.use('/section', sectionRoutes);
+app.use('/user', userRoutes);
 
 // Using custom middleware for handling 404 errors
 app.use(notFoundError);

@@ -114,13 +114,13 @@ export const register = async (req, res) => {
     `,
     };
 
-    transporter.sendMail(mailOptions, (emailError, info) => {
+    /*transporter.sendMail(mailOptions, (emailError, info) => {
       if (emailError) {
         console.error(emailError);
       } else {
         console.log('Welcome email sent: ' + info.response);
       }
-    });
+    });*/
     await user.save();
     res.status(201).json({ message: 'User registered successfully.' });
   } catch (error) {
