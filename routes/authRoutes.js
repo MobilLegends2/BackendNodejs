@@ -7,7 +7,7 @@ router.post('/', forgotPassword);
 router.post('/register', register);
 router.post('/logingoogel',loginGoogle);
 router.post('/login', login);
-router.post('/Outlook', loginWithOutlook);
+router.post('/WithOutlook', loginWithOutlook);
 router.post('/sign-in-with-token', signInUsingToken);
 router.post('/unlock-session', unlockSession);
 
