@@ -1,8 +1,12 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import { OAuth2Client } from 'google-auth-library';
+const CLIENT_ID = '754330445896-dfa97rp7o6u0l2aqoue3ajiq71spukvo.apps.googleusercontent.com'; // Replace with your actual Google Client ID
+
 import nodemailer from 'nodemailer';
 import { JWT_SECRET, JWT_REFRESH_SECRET } from '../config.js';
+
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -11,6 +15,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 export const register = async (req, res) => {
+  console.log(res.id_token)
   try {
     const { name, email, password } = req.body;
 
@@ -177,9 +182,9 @@ export const generateAccessToken = (user, refreshToken, res) => {
         email: user.email,
         avatar: user.avatar,
         status: user.status
-  
+
       };
-      res.json({ accessToken, user:userWithoutSensitiveData });
+      res.json({ accessToken, user: userWithoutSensitiveData });
     });
   } catch (error) {
     console.error(error);
@@ -233,8 +238,8 @@ function isRefreshTokenExpired(refreshToken) {
 
 //////////////////////
 export const genarate = async (req, res) => {
-console.log(generateRandomPassword());
-res.status(200).json({ message: generateRandomPassword() });
+  console.log(generateRandomPassword());
+  res.status(200).json({ message: generateRandomPassword() });
 }
 ///////////////////////////
 
@@ -252,7 +257,7 @@ export const unlockSession = async (req, res) => {
       return res.status(500).json({ message: 'Incorrect password.' });
     }
 
-  
+
 
     res.json({ message: 'Unlock session email sent successfully.' });
   } catch (error) {
@@ -289,17 +294,17 @@ function getRandomCharacter(characters) {
 }
 
 
-export const forgotPassword  = async (req, res) => {
+export const forgotPassword = async (req, res) => {
   try {
     const { name } = req.body;
 
     // Vérifiez si l'e-mail existe déjà dans la base de données
     const existingUser = await User.findOne({ name });
     const email = existingUser.email;
-const newpassword =generateRandomPassword();
-const hashedPassword = await bcrypt.hash(newpassword, 10);
-existingUser.password = hashedPassword;
-   await existingUser.save();
+    const newpassword = generateRandomPassword();
+    const hashedPassword = await bcrypt.hash(newpassword, 10);
+    existingUser.password = hashedPassword;
+    await existingUser.save();
     // Send welcome email
     const mailOptions = {
       from: 'your-email@gmail.com',
@@ -376,7 +381,7 @@ existingUser.password = hashedPassword;
       </body>
       </html>
       `,
-     
+
     };
 
     transporter.sendMail(mailOptions, (emailError, info) => {
@@ -386,10 +391,137 @@ existingUser.password = hashedPassword;
         console.log('Forget Password email sent: ' + info.response);
       }
     });
-    
+
     res.status(201).json({ message: 'Passward changed successfully.' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error changin user password.' });
+  }
+};
+
+
+
+const client = new OAuth2Client(CLIENT_ID);
+export const loginGoogle = async (req, res) => {
+  const { credential } = req.body;
+
+  // Verify the Google ID token
+  try {
+    const ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+
+    // Extract user information from the payload
+    const { email, sub, picture, given_name, family_name } = payload;
+
+    console.log('User email:', email);
+    console.log('User ID:', sub);
+    console.log('User pic:', picture);
+    console.log('User given_name:', given_name);
+    console.log('User family_name:', family_name);
+
+    // Check if the user already exists in the database
+    let existingUser = await User.findByEmail(email);
+
+    if (!existingUser) {
+      // If the user doesn't exist, create a new user
+      existingUser = new User({
+        name: given_name,
+        email,
+        password: sub, // You may need to handle the password differently for Google sign-in
+        status: 'busy',
+        avatar: picture,
+      });
+
+      // Save the new user to the database
+      await existingUser.save();
+    }
+
+    // Generate JWT tokens for authentication
+    const refreshToken = jwt.sign({ userId: existingUser._id }, JWT_REFRESH_SECRET, { expiresIn: '10m' });
+    const accessToken = jwt.sign({ userId: existingUser._id }, JWT_SECRET, { expiresIn: '1m' });
+
+    // Prepare user data to send back to the client
+    const userWithoutSensitiveData = {
+      _id: existingUser._id,
+      name: existingUser.name,
+      email: existingUser.email,
+      avatar: existingUser.avatar,
+      status: existingUser.status,
+    };
+
+    // Update user's refresh token and save it
+    existingUser.refreshToken = refreshToken;
+    await existingUser.save();
+
+    // Send response with authentication tokens and user data
+    res.json({ accessToken, refreshToken, user: userWithoutSensitiveData });
+  } catch (error) {
+    console.error('Error verifying Google ID token:', error);
+    res.status(400).json({ error: 'Failed to verify Google ID token.' });
+  }
+};
+
+
+// Assurez-vous d'installer node-fetch via npm ou yarn
+export const loginWithOutlook = async (req, res) => {
+  try {
+    const { credential } = req.body; // Le jeton JWT récupéré de Outlook
+console.log(credential);
+
+    // Décoder le jeton JWT pour obtenir les données qu'il contient
+    const decodedToken = jwt.decode(credential);
+    console.log(decodedToken);
+
+    // En fonction de l'identifiant de l'utilisateur, récupérez ou créez l'utilisateur dans votre base de données
+    let existingUser = await User.findByEmail(decodedToken.email); // Recherchez l'utilisateur dans la base de données
+
+    // Si l'utilisateur n'existe pas, vous pouvez le créer
+    if (!existingUser) {
+      // Créez l'utilisateur avec les informations disponibles dans le jeton JWT ou demandez plus d'informations à l'utilisateur
+      // Par exemple, vous pouvez obtenir l'email à partir du jeton JWT et demander un nom d'utilisateur supplémentaire
+      existingUser = new User({
+        name: decodedToken.preferred_username,
+        email:decodedToken.unique_name,
+        password: decodedToken.sub, // You may need to handle the password differently for Google sign-in
+        status: 'busy',
+        avatar: 'brian-hughes.jpg',
+      }); // Assurez-vous que l'identifiant de l'utilisateur est correctement défini
+        // Ajoutez d'autres champs utilisateur nécessaires
+     
+
+      // Enregistrez le nouvel utilisateur dans la base de données
+      await newUser.save();
+
+      // Attribuez le nouvel utilisateur à existingUser pour la suite du processus
+      existingUser = newUser;
+    }
+
+    // Générez des jetons JWT pour l'authentification
+    const refreshToken = jwt.sign({ userId: existingUser._id }, JWT_REFRESH_SECRET, { expiresIn: '10m' });
+    const accessToken = jwt.sign({ userId: existingUser._id }, JWT_SECRET, { expiresIn: '1m' });
+
+    // Préparez les données de l'utilisateur à renvoyer au client
+    const userWithoutSensitiveData = {
+      _id: existingUser._id,
+      name: existingUser.name,
+      email: existingUser.email,
+      avatar: existingUser.avatar,
+      status: existingUser.status,
+      // Ajoutez d'autres champs utilisateur que vous souhaitez envoyer au client
+    };
+
+    // Mettre à jour le jeton de rafraîchissement de l'utilisateur et l'enregistrer (si nécessaire)
+    existingUser.refreshToken = refreshToken;
+     await existingUser.save();
+
+    // Envoyer une réponse avec les jetons d'authentification et les données de l'utilisateur
+    res.json({ accessToken, refreshToken, user: userWithoutSensitiveData });
+  } catch (error) {
+    console.error('Error during Outlook sign-in:', error);
+    res.status(400).json({ error: 'Failed to sign in with Outlook.' });
   }
 };
