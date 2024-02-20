@@ -6,10 +6,10 @@ export function getAll(req, res) {
       let Users = [];
       for (let i = 0; i < docs.length; i++) {
         Users.push({
-            userID:docs[i].userID,
+          userID: docs[i].userID,
           firstname: docs[i].firstname,
-            lastname: docs[i].lastname,
-            username: docs[i].username,
+          lastname: docs[i].lastname,
+          username: docs[i].username,
           email: docs[i].email,
           password: docs[i].password,
           phone: docs[i].phone,
@@ -18,7 +18,7 @@ export function getAll(req, res) {
           role: docs[i].role
         });
       }
-      res.status(200).json({Users});
+      res.status(200).json({ Users });
     })
     .catch((err) => {
       res.status(500).json({ error: err });
