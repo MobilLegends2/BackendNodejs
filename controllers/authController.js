@@ -26,7 +26,7 @@ export const register = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({ name, email, password: hashedPassword, status: 'busy', avatar: 'brian-hughes.jpg' });
+    const user = new User({ name, email, password: hashedPassword, status: 'busy', avatar: 'brian-hughes.jpg', role: 'user' });
 
     // Send welcome email
     const mailOptions = {
@@ -441,7 +441,7 @@ export const loginGoogle = async (req, res) => {
     }
 
     // Generate JWT tokens for authentication
-    const refreshToken = jwt.sign({ userId: existingUser._id }, JWT_REFRESH_SECRET, { expiresIn: '10m' });
+    const refreshToken = jwt.sign({ userId: existingUser._id }, JWT_REFRESH_SECRET, { expiresIn: '10d' });
     const accessToken = jwt.sign({ userId: existingUser._id }, JWT_SECRET, { expiresIn: '1m' });
 
     // Prepare user data to send back to the client
@@ -466,11 +466,10 @@ export const loginGoogle = async (req, res) => {
 };
 
 
-// Assurez-vous d'installer node-fetch via npm ou yarn
 export const loginWithOutlook = async (req, res) => {
   try {
     const { credential } = req.body; // Le jeton JWT récupéré de Outlook
-console.log(credential);
+    console.log(credential);
 
     // Décoder le jeton JWT pour obtenir les données qu'il contient
     const decodedToken = jwt.decode(credential);
@@ -485,23 +484,23 @@ console.log(credential);
       // Par exemple, vous pouvez obtenir l'email à partir du jeton JWT et demander un nom d'utilisateur supplémentaire
       existingUser = new User({
         name: decodedToken.preferred_username,
-        email:decodedToken.unique_name,
+        email: decodedToken.email,
         password: decodedToken.sub, // You may need to handle the password differently for Google sign-in
         status: 'busy',
         avatar: 'brian-hughes.jpg',
       }); // Assurez-vous que l'identifiant de l'utilisateur est correctement défini
-        // Ajoutez d'autres champs utilisateur nécessaires
-     
+      // Ajoutez d'autres champs utilisateur nécessaires
+
 
       // Enregistrez le nouvel utilisateur dans la base de données
-      await newUser.save();
+      await existingUser.save();
 
       // Attribuez le nouvel utilisateur à existingUser pour la suite du processus
-      existingUser = newUser;
+
     }
 
-    // Générez des jetons JWT pour l'authentification
-    const refreshToken = jwt.sign({ userId: existingUser._id }, JWT_REFRESH_SECRET, { expiresIn: '10m' });
+  
+    const refreshToken = jwt.sign({ userId: existingUser._id }, JWT_REFRESH_SECRET, { expiresIn: '10d' });
     const accessToken = jwt.sign({ userId: existingUser._id }, JWT_SECRET, { expiresIn: '1m' });
 
     // Préparez les données de l'utilisateur à renvoyer au client
@@ -516,8 +515,8 @@ console.log(credential);
 
     // Mettre à jour le jeton de rafraîchissement de l'utilisateur et l'enregistrer (si nécessaire)
     existingUser.refreshToken = refreshToken;
-     await existingUser.save();
-
+    await existingUser.save();
+    console.log(userWithoutSensitiveData);
     // Envoyer une réponse avec les jetons d'authentification et les données de l'utilisateur
     res.json({ accessToken, refreshToken, user: userWithoutSensitiveData });
   } catch (error) {
