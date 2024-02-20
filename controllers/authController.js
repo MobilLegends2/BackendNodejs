@@ -48,6 +48,8 @@ export const register = async (req, res) => {
 
     // Generate an activation token
     const activationToken = jwt.sign({ email }, JWT_SECRET, { expiresIn: '1d' });
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = new User({ name, email, password: hashedPassword, status: 'busy', avatar: 'brian-hughes.jpg', role: 'user' });
 
     // Send activation email
     const activationLink = `http://localhost:9090/api/auth/activate/${activationToken}`;
@@ -74,17 +76,13 @@ export const register = async (req, res) => {
       `, // Le corps de l'email en HTML
     };
 
-    transporter.sendMail(mailOptions, (emailError, info) => {
+    /*transporter.sendMail(mailOptions, (emailError, info) => {
       if (emailError) {
         console.error(emailError);
       } else {
         console.log('Activation email sent: ' + info.response);
       }
-    });
-
-    // Hash the password and save the user
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({ name, email, password: hashedPassword, status: 'busy', avatar: 'brian-hughes.jpg', role: 'user' });
+    });*/
     await user.save();
 
     res.status(201).json({ message: 'User registered successfully. Please check your email to activate your account.' });
