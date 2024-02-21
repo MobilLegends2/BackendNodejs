@@ -137,7 +137,7 @@ export const login = async (req, res) => {
     if (!validPassword) {
       return res.status(401).json({ message: 'Incorrect password.' });
     }
-    const refreshToken = jwt.sign({ userId: user._id }, JWT_REFRESH_SECRET, { expiresIn: '10m' });
+    const refreshToken = jwt.sign({ userId: user._id }, JWT_REFRESH_SECRET, { expiresIn: '10d' });
     const accessToken = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '1m' });
 
 
