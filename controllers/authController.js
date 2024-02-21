@@ -170,7 +170,7 @@ export const generateAccessToken = (user, refreshToken, res) => {
         return res.status(401).json({ message: 'Invalid refresh token.' });
       }
 
-      const accessToken = jwt.sign({ userId: decoded.userId }, JWT_SECRET, { expiresIn: '1m' });
+      const accessToken = jwt.sign({ userId: decoded.userId }, JWT_SECRET, { expiresIn: '30m' });
       const userWithoutSensitiveData = {
         _id: user._id,
         name: user.name,
