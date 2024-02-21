@@ -393,6 +393,7 @@ export const loginGoogle = async (req, res) => {
     if (!existingUser) {
       // If the user doesn't exist, create a new user
       existingUser = new User({
+        userID: sub,
         name: given_name,
         email,
         password: sub, // You may need to handle the password differently for Google sign-in
@@ -447,6 +448,7 @@ export const loginWithOutlook = async (req, res) => {
       // Créez l'utilisateur avec les informations disponibles dans le jeton JWT ou demandez plus d'informations à l'utilisateur
       // Par exemple, vous pouvez obtenir l'email à partir du jeton JWT et demander un nom d'utilisateur supplémentaire
       existingUser = new User({
+        userID: decodedToken.sub,
         name: decodedToken.preferred_username,
         email: decodedToken.email,
         password: decodedToken.sub, // You may need to handle the password differently for Google sign-in
