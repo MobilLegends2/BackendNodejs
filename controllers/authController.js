@@ -490,3 +490,25 @@ export const loginWithOutlook = async (req, res) => {
     res.status(400).json({ error: 'Failed to sign in with Outlook.' });
   }
 };
+
+
+
+export const signout = async (req, res) => {
+  try {
+    // Trouver l'utilisateur par son email
+    const user = await findByEmail(decode(res.accessToken).email);
+
+    // Effacer le jeton d'accès de l'utilisateur
+    user.refreshToken = null;
+
+    // Enregistrer les modifications de l'utilisateur dans la base de données
+    await user.save();
+
+    // Répondre avec un succès
+    return res.status(200).json(true);
+  } catch (error) {
+    // Gérer les erreurs
+    console.error("Error signing out:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+};
