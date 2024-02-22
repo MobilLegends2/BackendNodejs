@@ -465,7 +465,7 @@ export const loginWithOutlook = async (req, res) => {
 
     }
 
-  
+
     const refreshToken = jwt.sign({ userId: existingUser._id }, JWT_REFRESH_SECRET, { expiresIn: '10d' });
     const accessToken = jwt.sign({ userId: existingUser._id }, JWT_SECRET, { expiresIn: '1m' });
 
@@ -495,11 +495,23 @@ export const loginWithOutlook = async (req, res) => {
 
 export const signout = async (req, res) => {
   try {
-    // Trouver l'utilisateur par son email
-    const user = await findByEmail(decode(res.accessToken).email);
+    const { accessToken } = req.body;
+    const decodedToken = jwt.decode(accessToken);
+    console.log(decodedToken);
 
-    // Effacer le jeton d'accès de l'utilisateur
-    user.refreshToken = null;
+    // Recherchez l'utilisateur dans la base de données en utilisant l'ID de l'utilisateur du jeton d'accès
+    let user = await User.findById(decodedToken.userId);
+
+    // Si l'utilisateur n'existe pas, vous devez le créer
+    if (!user) {
+      // Créer une nouvelle instance d'utilisateur
+      user = new User({
+        // Vous devrez remplir les détails de l'utilisateur en fonction de votre modèle d'utilisateur
+      });
+    }
+
+    // Effacer le jeton d'accès de l'utilisateur (utilisez la bonne propriété ici)
+    user.accessToken = null;
 
     // Enregistrer les modifications de l'utilisateur dans la base de données
     await user.save();
