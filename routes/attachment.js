@@ -1,13 +1,13 @@
 import express from 'express';
 import Attachment from '../models/attachment.js';
 import Conversation from '../models/conversation.js';
+import multerConfig from '../middlewares/multer-config.js'; // Import your Multer configuration
 
 const router = express.Router();
 
 // Create a new attachment and associate it with a conversation
-router.post('/conversations/:conversationId/attachments', async (req, res) => {
+router.post('/conversations/:conversationId/attachments', multerConfig('file'), async (req, res) => {
   try {
-    const { url } = req.body;
     const conversationId = req.params.conversationId;
 
     // Check if conversation exists
@@ -19,7 +19,7 @@ router.post('/conversations/:conversationId/attachments', async (req, res) => {
     // Create a new attachment
     const attachment = new Attachment({
       conversation: conversationId,
-      url
+      url: req.file.path // Assuming Multer stores the file path in req.file.path
     });
 
     // Save the attachment
@@ -30,8 +30,6 @@ router.post('/conversations/:conversationId/attachments', async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 });
-
-
 
 // Delete an attachment
 router.delete('/attachments/:id', async (req, res) => {
