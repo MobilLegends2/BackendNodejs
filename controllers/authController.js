@@ -393,6 +393,7 @@ export const loginGoogle = async (req, res) => {
     if (!existingUser) {
       // If the user doesn't exist, create a new user
       existingUser = new User({
+        userID: sub,
         name: given_name,
         email,
         password: sub, // You may need to handle the password differently for Google sign-in
@@ -447,6 +448,7 @@ export const loginWithOutlook = async (req, res) => {
       // Créez l'utilisateur avec les informations disponibles dans le jeton JWT ou demandez plus d'informations à l'utilisateur
       // Par exemple, vous pouvez obtenir l'email à partir du jeton JWT et demander un nom d'utilisateur supplémentaire
       existingUser = new User({
+        userID: decodedToken.sub,
         name: decodedToken.preferred_username,
         email: decodedToken.email,
         password: decodedToken.sub, // You may need to handle the password differently for Google sign-in
@@ -486,5 +488,27 @@ export const loginWithOutlook = async (req, res) => {
   } catch (error) {
     console.error('Error during Outlook sign-in:', error);
     res.status(400).json({ error: 'Failed to sign in with Outlook.' });
+  }
+};
+
+
+
+export const signout = async (req, res) => {
+  try {
+    // Trouver l'utilisateur par son email
+    const user = await findByEmail(decode(res.accessToken).email);
+
+    // Effacer le jeton d'accès de l'utilisateur
+    user.refreshToken = null;
+
+    // Enregistrer les modifications de l'utilisateur dans la base de données
+    await user.save();
+
+    // Répondre avec un succès
+    return res.status(200).json(true);
+  } catch (error) {
+    // Gérer les erreurs
+    console.error("Error signing out:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 };
