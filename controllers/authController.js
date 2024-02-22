@@ -107,7 +107,7 @@ export const login = async (req, res) => {
       return res.status(401).json({ message: 'Incorrect password.' });
     }
     const refreshToken = jwt.sign({ userId: user._id }, JWT_REFRESH_SECRET, { expiresIn: '1d' });
-    const accessToken = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '1m' });
+    const accessToken = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '10m' });
 
 
     const userWithoutSensitiveData = {
@@ -139,7 +139,7 @@ export const generateAccessToken = (user, refreshToken, res) => {
         return res.status(401).json({ message: 'Invalid refresh token.' });
       }
 
-      const accessToken = jwt.sign({ userId: decoded.userId }, JWT_SECRET, { expiresIn: '1m' });
+      const accessToken = jwt.sign({ userId: decoded.userId }, JWT_SECRET, { expiresIn: '10m' });
       const userWithoutSensitiveData = {
         _id: user._id,
         name: user.name,
@@ -407,7 +407,7 @@ export const loginGoogle = async (req, res) => {
 
     // Generate JWT tokens for authentication
     const refreshToken = jwt.sign({ userId: existingUser._id }, JWT_REFRESH_SECRET, { expiresIn: '1d' });
-    const accessToken = jwt.sign({ userId: existingUser._id }, JWT_SECRET, { expiresIn: '1m' });
+    const accessToken = jwt.sign({ userId: existingUser._id }, JWT_SECRET, { expiresIn: '10m' });
 
     // Prepare user data to send back to the client
     const userWithoutSensitiveData = {
@@ -467,7 +467,7 @@ export const loginWithOutlook = async (req, res) => {
 
 
     const refreshToken = jwt.sign({ userId: existingUser._id }, JWT_REFRESH_SECRET, { expiresIn: '10d' });
-    const accessToken = jwt.sign({ userId: existingUser._id }, JWT_SECRET, { expiresIn: '1m' });
+    const accessToken = jwt.sign({ userId: existingUser._id }, JWT_SECRET, { expiresIn: '10m' });
 
     // Préparez les données de l'utilisateur à renvoyer au client
     const userWithoutSensitiveData = {
