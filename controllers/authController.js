@@ -47,7 +47,7 @@ export const register = async (req, res) => {
     }
 
     // Generate an activation token
-    const activationToken = jwt.sign({ email }, JWT_SECRET, { expiresIn: '1d' });
+    const activationToken = jwt.sign({ email }, JWT_SECRET, { expiresIn: '10m' });
 
     // Send activation email
     const activationLink = `http://localhost:9090/api/auth/activate/${activationToken}`;
@@ -106,7 +106,7 @@ export const login = async (req, res) => {
     if (!validPassword) {
       return res.status(401).json({ message: 'Incorrect password.' });
     }
-    const refreshToken = jwt.sign({ userId: user._id }, JWT_REFRESH_SECRET, { expiresIn: '10m' });
+    const refreshToken = jwt.sign({ userId: user._id }, JWT_REFRESH_SECRET, { expiresIn: '1d' });
     const accessToken = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '1m' });
 
 
@@ -405,7 +405,7 @@ export const loginGoogle = async (req, res) => {
     }
 
     // Generate JWT tokens for authentication
-    const refreshToken = jwt.sign({ userId: existingUser._id }, JWT_REFRESH_SECRET, { expiresIn: '10d' });
+    const refreshToken = jwt.sign({ userId: existingUser._id }, JWT_REFRESH_SECRET, { expiresIn: '1d' });
     const accessToken = jwt.sign({ userId: existingUser._id }, JWT_SECRET, { expiresIn: '1m' });
 
     // Prepare user data to send back to the client
