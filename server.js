@@ -12,6 +12,7 @@ import attachmentRoutes from './routes/attachment.js';
 import categoryRoutes from './routes/category.js';
 import http from 'http';
 import { Server } from 'socket.io';
+import Message from './models/message.js'; // Import the Message model
 
 const app = express();
 const server = http.createServer(app);
@@ -58,9 +59,22 @@ io.on('connection', (socket) => {
     console.log('user disconnected');
   });
 
-  socket.on('new_message', (message) => {
-    console.log('New message:', message);
-    io.emit('new_message', message);
+  socket.on('new_message', async (messageData) => {
+    console.log('New message:', messageData);
+    try {
+      // Save the message to the database
+      const message = new Message({
+        sender: messageData.sender,
+        content: messageData.content,
+        conversation: messageData.conversationId
+      });
+      await message.save();
+
+      // Emit the message to other sockets
+      io.emit('new_message', message);
+    } catch (error) {
+      console.error('Error saving message:', error);
+    }
   });
 });
 
