@@ -1,4 +1,4 @@
-import Token from '../models/token.jsoken.js';
+import Token from '../models/token.js';
 
 export async function createToken(req, res) {
     try {
