@@ -7,7 +7,7 @@ import authRoutes from './routes/authRoutes.js';
 import sectionRoutes from './routes/section.js';
 import categoryRoutes from './routes/category.js';
 import userRoutes from './routes/users.js';
-import tokenRoutes from "./routes/token.js";
+import secretKeyRoutes from "./routes/secretKey.js";
 import applicationRoutes from "./routes/application.js";
 
 // Creating an express app
@@ -59,7 +59,7 @@ app.use('/category', categoryRoutes);
 app.use('/section', sectionRoutes);
 app.use('/user', userRoutes);
 app.use('/application', applicationRoutes);
-app.use('/token', tokenRoutes);
+app.use('/token', secretKeyRoutes);
 
 // Using custom middleware for handling 404 errors
 app.use(notFoundError);

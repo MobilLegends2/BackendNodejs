@@ -1,5 +1,5 @@
 import express from 'express';
-import * as TokenController from '../controllers/TokenController.js';
+import * as TokenController from '../controllers/secretKeyController.js';
 import { authenticateUser, authorizeAdmin } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
