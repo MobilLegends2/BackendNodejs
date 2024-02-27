@@ -1,5 +1,5 @@
 import Application from '../models/application.js';
-
+import { authenticateUser, authorizeAdmin } from '../middlewares/authMiddleware.js';
 export async function createApplication(req, res) {
   try {
     const { name, description } = req.body;
@@ -20,6 +20,7 @@ export async function getAllApplications(req, res) {
 }
 
 export async function getApplicationById(req, res) {
+  
   try {
     const application = await Application.findById(req.params.id);
     if (!application) {
@@ -56,11 +57,14 @@ export async function deleteApplication(req, res) {
   }
 }
 export async function getApplicationsByUserId(req, res) {
+  authenticateUser(req, res, async () => {
+
     try {
-      const { userId } = req.params;
+      const { userId } = req.user;
       const applications = await Application.find({ user: userId });
       res.status(200).json(applications);
     } catch (error) {
       res.status(500).json({ error: 'Erreur lors de la récupération des applications de l\'utilisateur' });
     }
+  });
   }
