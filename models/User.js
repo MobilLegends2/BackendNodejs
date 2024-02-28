@@ -3,11 +3,11 @@ import RoleEnum from './RoleEnum.js';
 
 const userSchema = new mongoose.Schema({
   userID:{type:String},
-  firstname: { type: String },
-  lastname: { type: String},
-  username: { type: String},
-  email: { type: String, },
-  password: { type: String,},
+  firstname: { type: String, },
+  lastname: { type: String,},
+  username: { type: String,},
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
   refreshToken: { type: String },
   phone: { type: String},
   avatar: { type: String },
