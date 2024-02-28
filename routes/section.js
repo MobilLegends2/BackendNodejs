@@ -19,7 +19,12 @@ router.post('/', async (req, res) => {
     title: req.body.title,
     descriptionF: req.body.descriptionF,
     descriptionK: req.body.descriptionK,
-    descriptionS: req.body.descriptionS
+    descriptionS: req.body.descriptionS,
+    colorLine: req.body.colorLine,
+    codeBox: req.body.codeBox,
+    formatOptions: req.body.formatOptions
+
+
   });
 
   try {
@@ -48,6 +53,7 @@ router.patch('/:id', getSection, async (req, res) => {
     res.section.descriptionS = req.body.descriptionS;
   }
 
+  
   try {
     const updatedSection = await res.section.save();
     res.json(updatedSection);
