@@ -7,6 +7,89 @@ const CLIENT_ID = '754330445896-dfa97rp7o6u0l2aqoue3ajiq71spukvo.apps.googleuser
 import nodemailer from 'nodemailer';
 import { JWT_SECRET, JWT_REFRESH_SECRET } from '../config.js';
 
+export const generateAccessToken = (user, refreshToken, res) => {
+  try {
+    if (!refreshToken) {
+      return res.status(400).json({ message: 'Refresh token is missing.' });
+    }
+
+    jwt.verify(refreshToken, JWT_REFRESH_SECRET, (err, decoded) => {
+      if (err) {
+        return res.status(401).json({ message: 'Invalid refresh token.' });
+      }
+
+      const accessToken = jwt.sign({ userId: decoded.userId }, JWT_SECRET, { expiresIn: '1m' });
+      const userWithoutSensitiveData = {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        avatar: user.avatar,
+        status: user.status
+
+      };
+      res.json({ accessToken, user: userWithoutSensitiveData });
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error generating access token.' });
+  }
+};
+export const signInUsingToken = async (req, res) => {
+  try {
+    const { accessToken } = req.body;
+
+    if (!accessToken) {
+      throw new Error('No access token provided');
+    }
+
+    // Verify the access token
+    const decoded = await jwt.decode(accessToken, JWT_SECRET);
+    const userId = decoded.userId;
+
+    // Proceed with normal flow
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    // Check if access token is expired
+    if (isAccessTokenExpired(accessToken)) {
+      // If access token is expired, check refresh token
+      if (isRefreshTokenExpired(user.refreshToken)) {
+        return res.status(401).json({ message: 'Refresh token expired.' });
+      } else {
+        // If refresh token is not expired, generate a new access token
+        generateAccessToken(user, user.refreshToken, res);
+      }
+    } else {
+      // If access token is not expired, return the user
+      res.json({ user });
+    }
+
+  } catch (error) {
+    console.error(error);
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ message: 'Invalid access token.' });
+    } else {
+      res.status(500).json({ message: 'Error refreshing access token.' });
+    }
+  }
+};
+
+// Function to check if refresh token is expired
+function isRefreshTokenExpired(refreshToken) {
+  const decoded = jwt.decode(refreshToken);
+  if (!decoded || Date.now() >= decoded.exp * 1000) {
+    return true;
+  }
+  return false;
+}
+
+// Function to check if access token is expired
+function isAccessTokenExpired(accessToken) {
+  const decoded = jwt.decode(accessToken);
+  return !decoded || Date.now() >= decoded.exp * 1000;
+}
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -106,8 +189,8 @@ export const login = async (req, res) => {
     if (!validPassword) {
       return res.status(401).json({ message: 'Incorrect password.' });
     }
-    const refreshToken = jwt.sign({ userId: user._id }, JWT_REFRESH_SECRET, { expiresIn: '1d' });
-    const accessToken = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '10m' });
+    const refreshToken = jwt.sign({ userId: user._id }, JWT_REFRESH_SECRET, { expiresIn: '10m' });
+    const accessToken = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '1m' });
 
 
     const userWithoutSensitiveData = {
@@ -128,6 +211,7 @@ export const login = async (req, res) => {
   }
 };
 
+<<<<<<< Updated upstream
 export const generateAccessToken = (user, refreshToken, res) => {
   try {
     if (!refreshToken) {
@@ -199,6 +283,8 @@ function isRefreshTokenExpired(refreshToken) {
   return false;
 }
 
+=======
+>>>>>>> Stashed changes
 
 //////////////////////
 export const genarate = async (req, res) => {
