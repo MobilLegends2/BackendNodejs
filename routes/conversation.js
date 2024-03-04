@@ -37,6 +37,24 @@ router.get('/conversations/:id', async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+// Get messages in a specific conversation
+router.get('/conversations/:conversationId/messages', async (req, res) => {
+  try {
+    const conversationId = req.params.conversationId;
+
+    // Find conversation with given ID
+    const conversation = await Conversation.findById(conversationId).populate('messages');
+
+    if (!conversation) {
+      return res.status(404).json({ message: 'Conversation not found' });
+    }
+
+    // Send the conversation along with its messages
+    res.json(conversation);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
 // Update a conversation
 router.put('/conversations/:id', async (req, res) => {
