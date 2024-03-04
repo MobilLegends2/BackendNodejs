@@ -1,7 +1,7 @@
 import express from "express";
 import mongoose from "mongoose";
 import morgan from "morgan";
-import cors from "cors"; // Import the cors middleware
+import cors from "cors";
 import { notFoundError, errorHandler } from "./middlewares/error-handler.js";
 import authRoutes from './routes/authRoutes.js';
 import sectionRoutes from './routes/section.js';
@@ -12,7 +12,8 @@ import attachmentRoutes from './routes/attachment.js';
 import categoryRoutes from './routes/category.js';
 import http from 'http';
 import { Server } from 'socket.io';
-import Message from './models/message.js'; // Import the Message model
+import Message from './models/message.js';
+import Conversation from './models/conversation.js'; // Import the Conversation model
 
 const app = express();
 const server = http.createServer(app);
@@ -35,9 +36,8 @@ try {
   console.error(error);
 }
 
-app.use(cors()); // Enable CORS middleware
-
-app.use(morgan('dev')); 
+app.use(cors());
+app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/img', express.static('public/images'));
@@ -50,7 +50,7 @@ app.use('/', groupRoutes);
 app.use('/', conversationRoutes);
 app.use('/', messageRoutes);
 app.use(notFoundError);
-app.use(errorHandler); 
+app.use(errorHandler);
 
 io.on('connection', (socket) => {
   console.log('a user connected');
@@ -66,12 +66,20 @@ io.on('connection', (socket) => {
       const message = new Message({
         sender: messageData.sender,
         content: messageData.content,
-        conversation: messageData.conversationId
+        conversation: messageData.conversation
       });
       await message.save();
 
+      // Update conversation with new message
+      await Conversation.updateOne(
+        { _id: messageData.conversation },
+        { $push: { messages: message._id } }
+      );
+
       // Emit the message to other sockets
-      io.emit('new_message', message);
+// Emit the message to other sockets with conversation
+// Emit the message to other sockets with conversationId
+io.emit('new_message', { ...messageData, conversation: messageData.conversation });
     } catch (error) {
       console.error('Error saving message:', error);
     }
