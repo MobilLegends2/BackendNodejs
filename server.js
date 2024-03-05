@@ -15,8 +15,12 @@ import secretKeyRoutes from "./routes/secretKey.js";
 import applicationRoutes from "./routes/application.js";
 import http from 'http';
 import { Server } from 'socket.io';
-import Message from './models/message.js'; // Import the Message model
+import Message from './models/message.js';
+import swaggerUi from 'swagger-ui-express';
+import YAML from 'yamljs';
 
+
+const swaggerDocument = YAML.load('./swagger.yaml');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -34,8 +38,6 @@ mongoose.set('debug', true);
 mongoose.Promise = global.Promise;
 
 // Connecting to the MongoDB database
-
-
 try {
   await mongoose.connect(`mongodb+srv://CrossChat:CrossChat123@crosschat.ekjeexv.mongodb.net/${databaseName}?retryWrites=true&w=majority`, {
     useNewUrlParser: true,
@@ -48,10 +50,13 @@ try {
 
 app.use(cors()); // Enable CORS middleware
 
-app.use(morgan('dev')); 
+app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/img', express.static('public/images'));
+
+// Serve the Swagger UI with your OpenAPI specification
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use('/api/auth', authRoutes);
 app.use('/category', categoryRoutes);
@@ -66,7 +71,7 @@ app.use('/', groupRoutes);
 app.use('/', conversationRoutes);
 app.use('/', messageRoutes);
 app.use(notFoundError);
-app.use(errorHandler); 
+app.use(errorHandler);
 
 io.on('connection', (socket) => {
   console.log('a user connected');
@@ -95,5 +100,5 @@ io.on('connection', (socket) => {
 });
 
 server.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });

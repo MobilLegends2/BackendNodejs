@@ -22,4 +22,6 @@ router.delete('/:id', TokenController.deleteToken,authenticateUser);
 // Route pour obtenir les tokens associés à un utilisateur par son ID
 router.get('/user', TokenController.getTokensByUserId,authenticateUser);
 
+
+
 export default router;

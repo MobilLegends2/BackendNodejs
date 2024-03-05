@@ -4,7 +4,6 @@ import { deleteSectionById } from '../controllers/section.js';
 
 
 const router = express.Router();
-
 router.get('/', async (req, res) => {
   try {
     const sections = await Section.find();
