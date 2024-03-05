@@ -18,7 +18,7 @@ router.post('/conversations', async (req, res) => {
 // Get all conversations
 router.get('/conversations', async (req, res) => {
   try {
-    const conversations = await Conversation.find();
+    const conversations = await Conversation.find().populate('messages');
     res.json(conversations);
   } catch (error) {
     res.status(500).json({ message: error.message });
