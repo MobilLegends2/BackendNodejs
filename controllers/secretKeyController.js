@@ -2,32 +2,30 @@ import Token from '../models/secretKey.js';
 
 import { authenticateUser, authorizeAdmin } from '../middlewares/authMiddleware.js';
 export async function createToken(req, res) {
-  authenticateUser(req, res, async () => {
-    try {
-      const { user, application, expirationDate, subscriptionType } = req.body;
+  try {
+   
 
-      // Génération d'une clé unique pour le token (à utiliser comme secret key pour le JWT)
-      const secretKey = uuidv4();
+    // Generate a unique secret key for the token (to be used as a secret key for the JWT)
+    const secretKey = "ccccccccccc";
 
-      // Création du JWT payload (contenant les informations que vous souhaitez inclure dans le token)
-      const jwtPayload = {
-        userId: user,
-        applicationId: application,
-        subscriptionType: "free",
-        // Autres données si nécessaire
-      };
+    // Create the JWT payload (containing the information you want to include in the token)
+    const jwtPayload = {
+      subscriptionType: "free", // Example subscription type
+      // Add other data if necessary
+    };
 
-      // Génération du JSON Web Token (JWT) à partir du payload et de la clé secrète unique
-      const jwtToken = jwt.sign(jwtPayload, secretKey, { expiresIn: '1h' }); // Exemple : expiration dans 1 heure
+    // Generate the JSON Web Token (JWT) from the payload and the unique secret key
+    const jwtToken = jwt.sign(jwtPayload, secretKey, { expiresIn: '1h' }); // Example: expires in 1 hour
 
-      // Création du token dans la base de données avec la clé secrète unique et le JWT
-      const token = await Token.create({ user, application, secretKey, jwtToken, expirationDate, subscriptionType });
-      await token.save();
-      res.status(201).json(token);
-    } catch (error) {
-      res.status(500).json({ error: 'Erreur lors de la création du token' });
-    }
-  });
+    // Create the token in the database with the unique secret key and the JWT
+    const token = await Token.create({ secretKey, jwtToken });
+    await token.save();
+
+    res.status(201).json(token);
+  } catch (error) {
+    console.error('Error creating token:', error);
+    res.status(500).json({ error: 'An error occurred while creating the token' });
+  }
 }
 
 

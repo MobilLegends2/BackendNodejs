@@ -3,7 +3,9 @@ import { JWT_SECRET } from '../config.js'; // Assuming JWT_SECRET import
 
 import User from '../models/User.js';
 export const authenticateUser = (req, res, next) => {
+  
   const token = req.header('Authorization');
+  console.log(token);
   if (!token) {
     return res.status(401).json({ success: false, message: 'Unauthorized - No token provided' });
   }

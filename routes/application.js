@@ -8,7 +8,7 @@ const router = express.Router();
 router.post('/', ApplicationController.createApplication,authenticateUser);
 
 // Route pour obtenir toutes les applications
-router.get('/', ApplicationController.getAllApplications,authenticateUser,authorizeAdmin);
+router.get('/s', ApplicationController.getAllApplications,authorizeAdmin);
 
 // Route pour obtenir une application par son ID
 router.get('/:id', ApplicationController.getApplicationById,authenticateUser);
@@ -20,6 +20,6 @@ router.put('/:id', ApplicationController.updateApplication,authenticateUser);
 router.delete('/:id', ApplicationController.deleteApplication,authenticateUser);
 
 // Route pour obtenir les applications associées à un utilisateur par son ID
-router.get('/user', ApplicationController.getApplicationsByUserId,authenticateUser,);
+router.get('/', ApplicationController.getApplicationsByUserId);
 
 export default router;
