@@ -1,20 +1,26 @@
 import Application from '../models/application.js';
 import { authenticateUser, authorizeAdmin } from '../middlewares/authMiddleware.js';
 import User from '../models/User.js';
-
+import crypto from 'crypto';
+// Function to generate a random secret key
+const generateSecretKey = () => {
+  return crypto.randomBytes(20).toString('hex');
+};
 export async function createApplication(req, res) {
-  authenticateUser(req, res, async () => {
-    try {
-      const { id } = req.user; // Get user ID from authenticated request
-      const user = await User.findOne({ id }); // Corrected variable name and added 'await'
 
+  authenticateUser(req, res, async () => {
+
+    try {
+      // Get user ID from authenticated request
+      const user = req.user;
       if (!user) {
         return res.status(404).json({ error: 'User not found' });
       }
 
-      const { name, description } = req.body;
-      const application = await Application.create({ name, description, user });
-      
+      const { name, logo } = req.body;
+      const secretKey = generateSecretKey();
+      const application = await Application.create({ name, logo, user, secretKey });
+
       res.status(201).json(application);
     } catch (error) {
       console.error('Error creating application:', error);
@@ -24,7 +30,7 @@ export async function createApplication(req, res) {
 }
 
 export async function getAllApplications(req, res) {
-  
+
   try {
     const applications = await Application.find();
     res.status(200).json(applications);
@@ -34,7 +40,7 @@ export async function getAllApplications(req, res) {
 }
 
 export async function getApplicationById(req, res) {
-  
+
   try {
     const application = await Application.findById(req.params.id);
     if (!application) {
@@ -73,10 +79,14 @@ export async function deleteApplication(req, res) {
 export async function getApplicationsByUserId(req, res) {
   // Use authenticateUser middleware to ensure user is authenticated
   authenticateUser(req, res, async () => {
+   
     try {
       console.log("Fetching applications by user ID");
-      const { userId } = req.user; // Get user ID from authenticated request
-      const applications = await Application.find({ user: userId }); // Fetch applications for the user
+
+      console.log(req);
+      // Get user ID from authenticated request
+      const applications = await Application.find({ user: req.user }); // Fetch applications for the user
+      console.log(applications);
       res.status(200).json(applications); // Respond with fetched applications
     } catch (error) {
       console.error('Error fetching applications:', error);

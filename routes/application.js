@@ -20,6 +20,6 @@ router.put('/:id', ApplicationController.updateApplication,authenticateUser);
 router.delete('/:id', ApplicationController.deleteApplication,authenticateUser);
 
 // Route pour obtenir les applications associées à un utilisateur par son ID
-router.get('/', ApplicationController.getApplicationsByUserId);
+router.get('/', ApplicationController.getApplicationsByUserId,authenticateUser);
 
 export default router;
