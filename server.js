@@ -62,7 +62,7 @@ app.use('/api/auth', authRoutes);
 app.use('/category', categoryRoutes);
 app.use('/section', sectionRoutes);
 app.use('/user', userRoutes);
-app.use('/application', applicationRoutes);
+app.use('/applications', applicationRoutes);
 app.use('/token', secretKeyRoutes);
 
 // Using custom middleware for handling 404 errors

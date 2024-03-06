@@ -4,9 +4,13 @@ const { Schema, model } = mongoose;
 
 const ApplicationSchema = new Schema({
   name: { type: String },
-  description: { type: String },
+  logo: { type: String },
   subscriptionType: { type: String },
-  
+  secretKey: { type: String },
+  user: { type: Schema.Types.ObjectId, ref: 'User' },
+
+}, {
+  timestamps: true
 });
 
 export default model('Application', ApplicationSchema);
