@@ -128,5 +128,34 @@ router.delete('/conversations/:id', async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+// Add emoji to a specific message in a conversation
+router.post('/conversations/:conversationId/messages/:messageId/emoji', async (req, res) => {
+  try {
+    const { emoji } = req.body;
+    const conversationId = req.params.conversationId;
+    const messageId = req.params.messageId;
 
+    // Find the conversation by ID
+    const conversation = await Conversation.findById(conversationId);
+    if (!conversation) {
+      return res.status(404).json({ message: 'Conversation not found' });
+    }
+
+    // Find the message within the conversation
+    const message = await Message.findById(messageId);
+    if (!message) {
+      return res.status(404).json({ message: 'Message not found' });
+    }
+
+    // Add the emoji to the message's emojis array
+    message.emojis.push(emoji);
+    
+    // Save the updated message
+    await message.save();
+
+    res.json(message);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
 export default router;

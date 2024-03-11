@@ -62,11 +62,29 @@ io.on('connection', (socket) => {
   socket.on('new_message', async (messageData) => {
     console.log('New message:', messageData);
     try {
+      // Get current time
+      const currentTime = new Date();
+      const messageTime = new Date(messageData.timestamp);
+
+      let formattedTime;
+      if (currentTime.toDateString() === messageTime.toDateString()) {
+        // If the message time is today
+        const formattedHours = messageTime.getHours().toString().padStart(2, '0');
+        const formattedMinutes = messageTime.getMinutes().toString().padStart(2, '0');
+        formattedTime = `${formattedHours}:${formattedMinutes}`;
+      } else {
+        // If the message time is not today
+        const formattedDay = messageTime.getDate().toString().padStart(2, '0');
+        const formattedMonth = (messageTime.getMonth() + 1).toString().padStart(2, '0'); // Month is zero-based
+        formattedTime = `${formattedDay}/${formattedMonth}`;
+      }
+
       // Save the message to the database
       const message = new Message({
         sender: messageData.sender,
         content: messageData.content,
-        conversation: messageData.conversation
+        conversation: messageData.conversation,
+        timestamp: formattedTime // Use formatted timestamp
       });
       await message.save();
 
@@ -76,15 +94,19 @@ io.on('connection', (socket) => {
         { $push: { messages: message._id } }
       );
 
-      // Emit the message to other sockets
-// Emit the message to other sockets with conversation
-// Emit the message to other sockets with conversationId
-io.emit('new_message', { ...messageData, conversation: messageData.conversation });
+      // Emit the message to other sockets with formatted timestamp
+      io.emit('new_message', { 
+        ...messageData, 
+        conversation: messageData.conversation,
+        timestamp: formattedTime // Use formatted timestamp
+      });
     } catch (error) {
       console.error('Error saving message:', error);
     }
   });
 });
+
+
 
 server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
