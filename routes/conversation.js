@@ -47,6 +47,9 @@ router.get('/conversation/:userId', async (req, res) => {
 
     // Find conversations where the given user ID is in the participants list
     const conversations = await Conversation.find({ participants: userId }).populate({
+      path: 'participants', // Populate participants field with user details
+      select: 'name' // Select only the 'name' field of each participant
+    }).populate({
       path: 'messages',
       populate: { path: 'sender', select: 'name' } // Populate sender field with name only
     });
@@ -67,6 +70,7 @@ router.get('/conversation/:userId', async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+
 
 
 
