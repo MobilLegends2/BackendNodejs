@@ -19,7 +19,7 @@ export async function createApplication(req, res) {
 
       const { name, logo } = req.body;
       const secretKey = generateSecretKey();
-      const application = await Application.create({ name, logo, user, secretKey });
+      const application = await Application.create({ name, logo, user, secretKey,etat:true});;
 
       res.status(201).json(application);
     } catch (error) {
@@ -30,14 +30,16 @@ export async function createApplication(req, res) {
 }
 
 export async function getAllApplications(req, res) {
-
+authorizeAdmin(req, res, async () => {
   try {
     const applications = await Application.find();
     res.status(200).json(applications);
   } catch (error) {
     res.status(500).json({ error: 'Erreur lors de la récupération des applications' });
   }
+});
 }
+
 
 export async function getApplicationById(req, res) {
 
@@ -67,6 +69,7 @@ export async function updateApplication(req, res) {
 
 export async function deleteApplication(req, res) {
   try {
+    console.log('req', req.params.id);
     const application = await Application.findByIdAndDelete(req.params.id);
     if (!application) {
       return res.status(404).json({ error: 'Application non trouvée' });

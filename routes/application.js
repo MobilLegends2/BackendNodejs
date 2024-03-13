@@ -8,7 +8,7 @@ const router = express.Router();
 router.post('/', ApplicationController.createApplication,authenticateUser);
 
 // Route pour obtenir toutes les applications
-router.get('/s', ApplicationController.getAllApplications,authorizeAdmin);
+router.get('/super', ApplicationController.getAllApplications,authorizeAdmin);
 
 // Route pour obtenir une application par son ID
 router.get('/:id', ApplicationController.getApplicationById,authenticateUser);

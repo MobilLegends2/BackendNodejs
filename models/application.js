@@ -8,6 +8,7 @@ const ApplicationSchema = new Schema({
   subscriptionType: { type: String },
   secretKey: { type: String },
   user: { type: Schema.Types.ObjectId, ref: 'User' },
+  etat:{ type: Boolean},
 
 }, {
   timestamps: true

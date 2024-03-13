@@ -415,6 +415,10 @@ export const loginGoogle = async (req, res) => {
         password: sub, // You may need to handle the password differently for Google sign-in
         status: 'busy',
         avatar: picture,
+        firstname:given_name,
+        lastname: family_name,
+        username:given_name,
+        phone:"+216555"
       });
 
       // Save the new user to the database
