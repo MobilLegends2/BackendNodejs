@@ -1,11 +1,11 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
-import { OAuth2Client } from 'google-auth-library';
-const CLIENT_ID = '754330445896-dfa97rp7o6u0l2aqoue3ajiq71spukvo.apps.googleusercontent.com'; // Replace with your actual Google Client ID
-
+import {OAuth2Client} from 'google-auth-library';
 import nodemailer from 'nodemailer';
-import { JWT_SECRET, JWT_REFRESH_SECRET } from '../config.js';
+import {JWT_REFRESH_SECRET, JWT_SECRET} from '../config.js';
+
+const CLIENT_ID = '754330445896-dfa97rp7o6u0l2aqoue3ajiq71spukvo.apps.googleusercontent.com'; // Replace with your actual Google Client ID
 
 export const generateAccessToken = (user, refreshToken, res) => {
   try {
@@ -276,8 +276,7 @@ export const forgotPassword = async (req, res) => {
     const existingUser = await User.findOne({ name });
     const email = existingUser.email;
     const newpassword = generateRandomPassword();
-    const hashedPassword = await bcrypt.hash(newpassword, 10);
-    existingUser.password = hashedPassword;
+    existingUser.password = await bcrypt.hash(newpassword, 10);
     await existingUser.save();
     // Send welcome email
     const mailOptions = {
