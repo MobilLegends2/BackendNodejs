@@ -210,6 +210,8 @@ export const login = async (req, res) => {
     res.status(500).json({ message: 'Error logging in user.' });
   }
 };
+
+
 //////////////////////
 export const genarate = async (req, res) => {
   console.log(generateRandomPassword());
@@ -270,11 +272,15 @@ function getRandomCharacter(characters) {
 
 export const forgotPassword = async (req, res) => {
   try {
-    const { name } = req.body;
+    const { email } = req.body;
+console.log(email);
+    // Check if the email exists in the database
+    const existingUser = await User.findByEmail(email);
+    console.log(existingUser)
+    if (!existingUser) {
+      return res.status(404).json({ message: 'User not found with this email address.' });
+    }
 
-    // Vérifiez si l'e-mail existe déjà dans la base de données
-    const existingUser = await User.findOne({ name });
-    const email = existingUser.email;
     const newpassword = generateRandomPassword();
     const hashedPassword = await bcrypt.hash(newpassword, 10);
     existingUser.password = hashedPassword;
@@ -341,7 +347,7 @@ export const forgotPassword = async (req, res) => {
       <body>
         <div class="wrapper">
           <div class="header">
-            <h2>Password Changed for ${name}</h2>
+            <h2>Password Changed for ${email}</h2>
           </div>
           <div class="content">
             <p>Your password has been changed successfully!</p>
