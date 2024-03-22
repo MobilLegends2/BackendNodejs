@@ -51,7 +51,9 @@ export const signInUsingToken = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found.' });
     }
-
+    if (user.isBanned ==true) { // Assuming 'status' is the field where user status is stored, and 'banned' indicates a banned user
+      return res.status(403).json({ message: 'User is banned.' });
+    }
     // Check if access token is expired
     if (isAccessTokenExpired(accessToken)) {
       // If access token is expired, check refresh token
@@ -62,8 +64,20 @@ export const signInUsingToken = async (req, res) => {
         generateAccessToken(user, user.refreshToken, res);
       }
     } else {
+      const userWithoutSensitiveData = {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        avatar: user.avatar,
+        status: user.status,
+        role: user.role
+
+      };
+
+      console.log("houniihouniiiiiiiiiiiii");
+      console.log(userWithoutSensitiveData);
       // If access token is not expired, return the user
-      res.json({ user });
+      res.json({ user: userWithoutSensitiveData });
     }
 
   } catch (error) {
@@ -184,7 +198,9 @@ export const login = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found.' });
     }
-
+    if (user.isBanned == true) { // Assuming 'status' is the field where user status is stored, and 'banned' indicates a banned user
+      return res.status(403).json({ message: 'User is banned.' });
+    }
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) {
       return res.status(401).json({ message: 'Incorrect password.' });
@@ -198,7 +214,8 @@ export const login = async (req, res) => {
       name: user.name,
       email: user.email,
       avatar: user.avatar,
-      status: user.status
+      status: user.status,
+      role: user.role
 
     };
     user.refreshToken = refreshToken;
@@ -227,7 +244,9 @@ export const unlockSession = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found.' });
     }
-
+    if (user.isBanned == true) { // Assuming 'status' is the field where user status is stored, and 'banned' indicates a banned user
+      return res.status(403).json({ message: 'User is banned.' });
+    }
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) {
       return res.status(500).json({ message: 'Incorrect password.' });
@@ -272,7 +291,18 @@ function getRandomCharacter(characters) {
 
 export const forgotPassword = async (req, res) => {
   try {
+<<<<<<< Updated upstream
     const { name } = req.body;
+=======
+    const { email } = req.body;
+    console.log(email);
+    // Check if the email exists in the database
+    const existingUser = await User.findByEmail(email);
+    console.log(existingUser)
+    if (!existingUser) {
+      return res.status(404).json({ message: 'User not found with this email address.' });
+    }
+>>>>>>> Stashed changes
 
     // Vérifiez si l'e-mail existe déjà dans la base de données
     const existingUser = await User.findOne({ name });
@@ -411,12 +441,22 @@ export const loginGoogle = async (req, res) => {
         password: sub, // You may need to handle the password differently for Google sign-in
         status: 'busy',
         avatar: picture,
+<<<<<<< Updated upstream
+=======
+        firstname: given_name,
+        lastname: family_name,
+        username: given_name,
+        phone: "+216555",
+        isBanned: false
+>>>>>>> Stashed changes
       });
 
       // Save the new user to the database
       await existingUser.save();
     }
-
+    if (existingUser.isBanned == true) { // Assuming 'status' is the field where user status is stored, and 'banned' indicates a banned user
+      return res.status(403).json({ message: 'User is banned.' });
+    }
     // Generate JWT tokens for authentication
     const refreshToken = jwt.sign({ userId: existingUser._id }, JWT_REFRESH_SECRET, { expiresIn: '1d' });
     const accessToken = jwt.sign({ userId: existingUser._id }, JWT_SECRET, { expiresIn: '10m' });
@@ -428,6 +468,9 @@ export const loginGoogle = async (req, res) => {
       email: existingUser.email,
       avatar: existingUser.avatar,
       status: existingUser.status,
+      role: existingUser.role,
+      isBanned:existingUser.isBanned
+
     };
 
     // Update user's refresh token and save it
@@ -466,6 +509,7 @@ export const loginWithOutlook = async (req, res) => {
         password: decodedToken.sub, // You may need to handle the password differently for Google sign-in
         status: 'busy',
         avatar: 'brian-hughes.jpg',
+        isBanned: false, //
       }); // Assurez-vous que l'identifiant de l'utilisateur est correctement défini
       // Ajoutez d'autres champs utilisateur nécessaires
 
@@ -476,7 +520,9 @@ export const loginWithOutlook = async (req, res) => {
       // Attribuez le nouvel utilisateur à existingUser pour la suite du processus
 
     }
-
+    if (existingUser.isBanned == true) { // Assuming 'status' is the field where user status is stored, and 'banned' indicates a banned user
+      return res.status(403).json({ message: 'User is banned.' });
+    }
 
     const refreshToken = jwt.sign({ userId: existingUser._id }, JWT_REFRESH_SECRET, { expiresIn: '10d' });
     const accessToken = jwt.sign({ userId: existingUser._id }, JWT_SECRET, { expiresIn: '10m' });
@@ -488,6 +534,7 @@ export const loginWithOutlook = async (req, res) => {
       email: existingUser.email,
       avatar: existingUser.avatar,
       status: existingUser.status,
+      role: existingUser.role
       // Ajoutez d'autres champs utilisateur que vous souhaitez envoyer au client
     };
 
