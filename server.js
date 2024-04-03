@@ -48,10 +48,8 @@ mongoose.Promise = global.Promise;
 
 // Connecting to the MongoDB database
 try {
-  await mongoose.connect(`mongodb+srv://CrossChat:CrossChat123@crosschat.ekjeexv.mongodb.net/${databaseName}?retryWrites=true&w=majority`, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-  });
+  await mongoose.connect(`mongodb://127.0.0.1:27017/${databaseName}`);
+
   console.log(`Connected to ${databaseName}`);
 } catch (error) {
   console.error(error);

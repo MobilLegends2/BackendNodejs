@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 const conversationSchema = new mongoose.Schema({
-  participants: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  participants: [{ type: String }],
   messages: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Message' }],
   attachments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Attachment' }],
   // Other fields you may want to include:
