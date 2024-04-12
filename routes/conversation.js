@@ -162,4 +162,25 @@ router.post('/conversations/:conversationId/messages/:messageId/emoji', async (r
     res.status(400).json({ message: error.message });
   }
 });
+router.get('/conversation/:userId1/:userId2', async (req, res) => {
+  try {
+    const { userId1, userId2 } = req.params;
+
+    // Check if conversation already exists between the two users
+    let conversation = await Conversation.findOne({ 
+      participants: { $all: [userId1, userId2] } 
+    });
+
+    // If conversation doesn't exist, create a new one
+    if (!conversation) {
+      conversation = new Conversation({ participants: [userId1, userId2] });
+      await conversation.save();
+    }
+
+    res.json(conversation);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 export default router;
