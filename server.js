@@ -103,32 +103,21 @@ io.on('connection', (socket) => {
     socket.on(eventName, async (messageData) => {
       console.log(`New message in conversation ${conversationId}:`, messageData);
       try {
-        // Get current time
-        const currentTime = new Date();
-        const messageTime = new Date(messageData.timestamp);
-
-        let formattedTime;
-        if (currentTime.toDateString() === messageTime.toDateString()) {
-          // If the message time is today
-          const formattedHours = messageTime.getHours().toString().padStart(2, '0');
-          const formattedMinutes = messageTime.getMinutes().toString().padStart(2, '0');
-          formattedTime = `${formattedHours}:${formattedMinutes}`;
-        } else {
-          // If the message time is not today
-          const formattedDay = messageTime.getDate().toString().padStart(2, '0');
-          const formattedMonth = (messageTime.getMonth() + 1).toString().padStart(2, '0'); // Month is zero-based
-          formattedTime = `${formattedDay}/${formattedMonth}`;
-        }
-
+        
         // Save the message to the database
-        const message = new Message({
-          sender: messageData.sender,
-          content: messageData.content,
-          conversation: messageData.conversation,
-          timestamp: formattedTime, // Use formatted timestamp
-          seenBy: [messageData.sender] // Add sender to seenBy array
 
-        });
+        
+       // Now, when saving the message, format the timestamp to include only hour and minute
+const currentTime = new Date();
+const formattedTime = `${currentTime.getHours().toString().padStart(2, '0')}:${currentTime.getMinutes().toString().padStart(2, '0')}`;
+
+const message = new Message({
+  sender: messageData.sender,
+  content: messageData.content,
+  conversation: messageData.conversation,
+  timestamp: formattedTime, // Use formatted timestamp
+  seenBy: [messageData.sender] // Add sender to seenBy array
+});
         await message.save(); 
 
         // Update conversation with new message
@@ -141,7 +130,7 @@ io.on('connection', (socket) => {
         io.emit(eventName, { 
           ...messageData, 
           conversation: messageData.conversation,
-          timestamp: formattedTime // Use formatted timestamp
+          timestamp: formattedTime, // Use formatted timestamp
         });
       } catch (error) {
         console.error(`Error saving message in conversation ${conversationId}:`, error);
