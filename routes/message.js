@@ -20,7 +20,8 @@ router.post('/conversations/:conversationId/messages', async (req, res) => {
     const message = new Message({
       sender,
       content,
-      conversation: conversationId
+      conversation: conversationId,
+      type,
     });
 
     // Save the message
@@ -62,7 +63,6 @@ router.delete('/messages/:id', async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
-// Add an emoji to a specific message
 router.post('/messages/:id/emoji', async (req, res) => {
   try {
     const { emoji } = req.body;
@@ -74,9 +74,14 @@ router.post('/messages/:id/emoji', async (req, res) => {
       return res.status(404).json({ message: 'Message not found' });
     }
 
-    // Add the emoji to the message's emojis array
-    message.emojis.push(emoji);
-    
+    // If the emoji is already in the array, clear the array
+    if (message.emojis.length === 1 && message.emojis[0] === emoji) {
+      message.emojis = [];
+    } else {
+      // Set the array with the new emoji
+      message.emojis = [emoji];
+    }
+
     // Save the updated message
     await message.save();
 

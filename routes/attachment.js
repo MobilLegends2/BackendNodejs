@@ -30,13 +30,14 @@ router.post('/conversations/:conversationId/attachments', multerConfig.single('f
     // Create a new attachment
     const attachment = new Attachment({
       conversation: conversationId,
-      url: result.secure_url // Store Cloudinary URL
+      url: result.secure_url
+       // Store Cloudinary URL
     });
-
+console.log(attachment.url);
     // Save the attachment
     await attachment.save();
 
-    res.status(201).json(attachment);
+    res.status(201).json({ url: attachment.url });
   } catch (error) {
     res.status(400).json({ message: error.message });
   }

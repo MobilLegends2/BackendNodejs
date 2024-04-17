@@ -103,22 +103,24 @@ io.on('connection', (socket) => {
     socket.on(eventName, async (messageData) => {
       console.log(`New message in conversation ${conversationId}:`, messageData);
       try {
-        
+
         // Save the message to the database
 
-        
-       // Now, when saving the message, format the timestamp to include only hour and minute
-const currentTime = new Date();
-const formattedTime = `${currentTime.getHours().toString().padStart(2, '0')}:${currentTime.getMinutes().toString().padStart(2, '0')}`;
 
-const message = new Message({
-  sender: messageData.sender,
-  content: messageData.content,
-  conversation: messageData.conversation,
-  timestamp: formattedTime, // Use formatted timestamp
-  seenBy: [messageData.sender] // Add sender to seenBy array
-});
-        await message.save(); 
+        // Now, when saving the message, format the timestamp to include only hour and minute
+        const currentTime = new Date();
+        const formattedTime = `${currentTime.getHours().toString().padStart(2, '0')}:${currentTime.getMinutes().toString().padStart(2, '0')}`;
+
+        const message = new Message({
+          sender: messageData.sender,
+          content: messageData.content,
+          conversation: messageData.conversation,
+          timestamp: formattedTime, // Use formatted timestamp
+          seenBy: [messageData.sender], // Add sender to seenBy array,,
+          type: messageData.type
+
+        });
+        await message.save();
 
         // Update conversation with new message
         await Conversation.updateOne(
@@ -127,8 +129,8 @@ const message = new Message({
         );
 
         // Emit the message to other sockets with formatted timestamp
-        io.emit(eventName, { 
-          ...messageData, 
+        io.emit(eventName, {
+          ...messageData,
           conversation: messageData.conversation,
           timestamp: formattedTime, // Use formatted timestamp
         });
