@@ -8,6 +8,7 @@ import authRoutes from './routes/authRoutes.js';
 import sectionRoutes from './routes/section.js';
 import conversationRoutes from './routes/conversation.js';
 import messageRoutes from './routes/message.js';
+import voicemessageRoutes from './routes/voicemessage.js';
 import groupRoutes from './routes/group.js';
 import attachmentRoutes from './routes/attachment.js';
 import categoryRoutes from './routes/category.js';
@@ -81,6 +82,7 @@ app.use('/', attachmentRoutes);
 app.use('/', groupRoutes);
 app.use('/', conversationRoutes);
 app.use('/', messageRoutes);
+app.use('/', voicemessageRoutes);
 app.use(notFoundError);
 app.use(errorHandler);
 
