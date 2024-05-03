@@ -30,7 +30,7 @@ const app = express();
 const server = http.createServer(app);
 
 // Use socket.io for server
-const io = new Server(server, {
+export const io = new Server(server, {
   cors: {
     origin: '*',
     methods: ['GET', 'POST']

@@ -1,6 +1,7 @@
 import express from 'express';
 import Message from '../models/message.js';
 import Conversation from '../models/conversation.js';
+import { io } from '../server.js'; // Import the io object
 
 const router = express.Router();
 
@@ -84,6 +85,37 @@ router.post('/messages/:id/emoji', async (req, res) => {
 
     // Save the updated message
     await message.save();
+
+    res.json(message);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+// Update a message with an emoji
+router.post('/message/:id/emoji', async (req, res) => {
+  try {
+    const { emoji } = req.body;
+    const messageId = req.params.id;
+
+    // Find the message by ID
+    const message = await Message.findById(messageId);
+    if (!message) {
+      return res.status(404).json({ message: 'Message not found' });
+    }
+
+    // If the emoji is already in the array, clear the array
+    if (message.emojis.length === 1 && message.emojis[0] === emoji) {
+      message.emojis = [];
+    } else {
+      // Set the array with the new emoji
+      message.emojis = [emoji];
+    }
+
+    // Save the updated message
+    await message.save();
+
+    // Emit socket event with updated message ID
+    io.emit('emoji_added', { messageId, emoji });
 
     res.json(message);
   } catch (error) {
