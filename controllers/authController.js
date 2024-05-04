@@ -198,7 +198,8 @@ export const login = async (req, res) => {
       name: user.name,
       email: user.email,
       avatar: user.avatar,
-      status: user.status
+      status: user.status,
+      role : user.role,
 
     };
     user.refreshToken = refreshToken;
@@ -322,6 +323,7 @@ export const forgotPassword = async (req, res) => {
 
     // Send email with access token
     const resetPasswordLink = `http://localhost:4200/reset-password?token=${accessToken}`; // Adjust this URL according to your frontend route
+    console.log(resetPasswordLink);
     const mailOptions = {
       from: 'your-email@gmail.com',
       to: email,

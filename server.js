@@ -49,8 +49,8 @@ mongoose.Promise = global.Promise;
 
 // Connecting to the MongoDB database
 try {
-  //await mongoose.connect(`mongodb+srv://CrossChat:CrossChat123@crosschat.ekjeexv.mongodb.net/${databaseName}`);
-  await mongoose.connect(`mongodb://localhost:27017/${databaseName}`);
+  await mongoose.connect(`mongodb+srv://CrossChat:CrossChat123@crosschat.ekjeexv.mongodb.net/${databaseName}`);
+ // await mongoose.connect(`mongodb://localhost:27017/${databaseName}`);
   
   console.log(`Connected to ${databaseName}`);
 } catch (error) {
