@@ -1,10 +1,61 @@
 import express from 'express';
 import Conversation from '../models/conversation.js';
-
+import Application from '../models/application.js';
 const router = express.Router();
+/*
+const verifySecretKey = async (req, res, next) => {
+  try {
+    // Extract the application ID from the request parameters
+    const applicationId = req.params.applicationId;
+    
+    // Extract the secret key from the request headers
+    const secretKey = req.headers['x-secret-key'];
+    
+    // Find the application by ID
+    const application = await Application.findById(applicationId);
+    
+    // Check if application exists
+    if (!application) {
+      return res.status(404).json({ message: 'Application not found' });
+    }
+
+    // Check if the secret key matches
+    if (secretKey !== application.secretKey) {
+      return res.status(403).json({ message: 'Forbidden: Invalid secret key' });
+    }
+
+    // If everything is valid, proceed to the next middleware or route handler
+    next();
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+*/
+const verifySecretKey = async (req, res, next) => {
+  try {
+    // Extract the secret key from the request headers
+    const secretKey = req.headers['x-secret-key'];
+    
+    // Find all applications
+    const applications = await Application.find();
+    
+    // Check if any application's secret key matches the provided secret key
+    const validSecretKey = applications.some(application => application.secretKey === secretKey);
+
+    if (!validSecretKey) {
+      return res.status(403).json({ message: 'Forbidden: Invalid secret key' });
+    }
+
+    // If everything is valid, proceed to the next middleware or route handler
+    next();
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 // Create a new conversation
-router.post('/conversations', async (req, res) => {
+router.post('/conversations',verifySecretKey, async (req, res) => {
   try {
     const { participants } = req.body;
     const conversation = new Conversation({ participants });
@@ -16,7 +67,7 @@ router.post('/conversations', async (req, res) => {
 });
 
 // Get all conversations
-router.get('/conversations', async (req, res) => {
+router.get('/conversations',verifySecretKey, async (req, res) => {
   try {
     const conversations = await Conversation.find().populate({
       path: 'messages',
@@ -41,7 +92,7 @@ router.get('/conversations', async (req, res) => {
   }
 });
 // Get all conversations for specific user
-router.get('/conversation/:userId', async (req, res) => {
+router.get('/conversation/:userId',verifySecretKey, async (req, res) => {
   try {
     const userId = req.params.userId;
 
@@ -76,7 +127,7 @@ router.get('/conversation/:userId', async (req, res) => {
 
 
 // Get a single conversation
-router.get('/conversations/:id', async (req, res) => {
+router.get('/conversations/:id',verifySecretKey, async (req, res) => {
   try {
     const conversation = await Conversation.findById(req.params.id);
     if (!conversation) {
@@ -88,7 +139,7 @@ router.get('/conversations/:id', async (req, res) => {
   }
 });
 // Get messages in a specific conversation
-router.get('/conversations/:conversationId/messages', async (req, res) => {
+router.get('/conversations/:conversationId/messages',verifySecretKey, async (req, res) => {
   try {
     const conversationId = req.params.conversationId;
 
@@ -107,7 +158,7 @@ router.get('/conversations/:conversationId/messages', async (req, res) => {
 });
 
 // Update a conversation
-router.put('/conversations/:id', async (req, res) => {
+router.put('/conversations/:id',verifySecretKey, async (req, res) => {
   try {
     const { participants } = req.body;
     const conversation = await Conversation.findByIdAndUpdate(req.params.id, { participants }, { new: true });
@@ -121,7 +172,7 @@ router.put('/conversations/:id', async (req, res) => {
 });
 
 // Delete a conversation
-router.delete('/conversations/:id', async (req, res) => {
+router.delete('/conversations/:id', verifySecretKey,async (req, res) => {
   try {
     const conversation = await Conversation.findByIdAndDelete(req.params.id);
     if (!conversation) {
@@ -133,7 +184,7 @@ router.delete('/conversations/:id', async (req, res) => {
   }
 });
 // Add emoji to a specific message in a conversation
-router.post('/conversations/:conversationId/messages/:messageId/emoji', async (req, res) => {
+router.post('/conversations/:conversationId/messages/:messageId/emoji',verifySecretKey, async (req, res) => {
   try {
     const { emoji } = req.body;
     const conversationId = req.params.conversationId;
@@ -162,7 +213,7 @@ router.post('/conversations/:conversationId/messages/:messageId/emoji', async (r
     res.status(400).json({ message: error.message });
   }
 });
-router.get('/conversation/:userId1/:userId2', async (req, res) => {
+router.get('/conversation/:userId1/:userId2',verifySecretKey, async (req, res) => {
   try {
     const { userId1, userId2 } = req.params;
 

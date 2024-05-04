@@ -4,7 +4,6 @@ npm-debug.log
 
 # Ignore les fichiers de configuration
 .env
-
 # Ignore le dossier controller
 public/
 

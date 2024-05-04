@@ -270,76 +270,105 @@ function getRandomCharacter(characters) {
 }
 
 
+export const resetPassword = async (req, res) => {
+  console.log(req.body);
+  try {
+    const { password, token } = req.body;
+
+    // Decode the token to get the user ID
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const userId = decoded.userId;
+
+    // Check if the user exists in the database
+    const existingUser = await User.findById(userId);
+    if (!existingUser) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Update the user's password in the database
+    existingUser.password = hashedPassword;
+    await existingUser.save();
+
+    // Optionally, you can invalidate the reset token here if needed
+
+    // Respond with a success message
+    res.status(200).json({ message: 'Password reset successfully.' });
+  } catch (error) {
+    // Handle any errors
+    console.error(error);
+    res.status(500).json({ message: 'Error resetting password.' });
+  }
+};
+
 export const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
-console.log(email);
+    console.log(email);
+
     // Check if the email exists in the database
     const existingUser = await User.findByEmail(email);
-    console.log(existingUser)
+    console.log(existingUser);
     if (!existingUser) {
       return res.status(404).json({ message: 'User not found with this email address.' });
     }
 
-    const newpassword = generateRandomPassword();
-    const hashedPassword = await bcrypt.hash(newpassword, 10);
-    existingUser.password = hashedPassword;
-    await existingUser.save();
-    // Send welcome email
+    // Generate an access token
+    const accessToken = jwt.sign({ userId: existingUser._id }, JWT_SECRET, { expiresIn: '10m' });
+
+   
+
+    // Send email with access token
+    const resetPasswordLink = `http://localhost:4200/reset-password?token=${accessToken}`; // Adjust this URL according to your frontend route
     const mailOptions = {
       from: 'your-email@gmail.com',
       to: email,
-      subject: 'Password changed',
-      text: `your password have been changed , u can access to your account using this password ${newpassword} and u can changed later`,
+      subject: 'Reset Your Password',
+      text: `Click the following link to reset your password: ${resetPasswordLink}`,
       html: `
       <!DOCTYPE html>
       <html lang="en">
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Password Changed</title>
+        <title>Reset Your Password</title>
+        <!-- Your CSS styles -->
         <style>
-          body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f4;
-            color: #333333;
-          }
+          /* Add your custom CSS styles here */
           .wrapper {
-            max-width: 600px;
-            margin: 20px auto;
+            max-width: 500px;
+            margin: 0 auto;
             padding: 20px;
-            background-color: #ffffff;
-            border: 1px solid #dddddd;
-            border-radius: 5px;
+            background-color: #f9f9f9;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
           }
           .header {
-            background-color: #007bff;
-            color: #ffffff;
-            padding: 10px;
             text-align: center;
-            border-radius: 5px 5px 0 0;
+            margin-bottom: 20px;
           }
           .content {
-            padding: 20px;
-            text-align: left;
-            line-height: 1.5;
-          }
-          .footer {
-            font-size: 12px;
             text-align: center;
-            padding: 15px;
-            background-color: #f4f4f4;
-            border-radius: 0 0 5px 5px;
+            margin-bottom: 30px;
           }
           .button {
             display: inline-block;
             padding: 10px 20px;
-            background-color: #28a745;
-            color: #ffffff;
+            background-color: #007bff;
+            color: #fff;
             text-decoration: none;
             border-radius: 5px;
+            transition: background-color 0.3s;
+          }
+          .button:hover {
+            background-color: #0056b3;
+          }
+          .footer {
+            text-align: center;
+            font-size: 14px;
+            color: #777;
             margin-top: 20px;
           }
         </style>
@@ -347,35 +376,38 @@ console.log(email);
       <body>
         <div class="wrapper">
           <div class="header">
-            <h2>Password Changed for ${email}</h2>
+            <h2>Reset Your Password</h2>
           </div>
           <div class="content">
-            <p>Your password has been changed successfully!</p>
-            <p>You can now access your account using the new password: <strong>${newpassword}</strong>.</p>
-            <p>You can change your password later.</p>
+          
+            <p>Hi ${existingUser.firstname},</p>
+            <p>It looks like you've requested to reset your password. Click the button below to set up a new password:</p>
+            <a href="${resetPasswordLink}" class="button">Reset Password Now</a>
           </div>
           <div class="footer">
-            © 2024 Your App. All rights reserved.
+            If you didn't request a password reset or need further assistance, please contact our support team.
+            <br>
+            &copy; 2024 Your App. All rights reserved.
           </div>
         </div>
       </body>
       </html>
+      
       `,
-
     };
 
     transporter.sendMail(mailOptions, (emailError, info) => {
       if (emailError) {
         console.error(emailError);
+        return res.status(500).json({ message: 'Error sending reset password email.' });
       } else {
-        console.log('Forget Password email sent: ' + info.response);
+        console.log('Reset Password email sent: ' + info.response);
+        return res.status(201).json({ message: 'Reset password email sent successfully.' });
       }
     });
-
-    res.status(201).json({ message: 'Passward changed successfully.' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Error changin user password.' });
+    res.status(500).json({ message: 'Error changing user password.' });
   }
 };
 
@@ -417,6 +449,7 @@ export const loginGoogle = async (req, res) => {
         avatar: picture,
         firstname:given_name,
         lastname: family_name,
+        
         username:given_name,
         phone:"+216555"
       });
@@ -436,6 +469,7 @@ export const loginGoogle = async (req, res) => {
       email: existingUser.email,
       avatar: existingUser.avatar,
       status: existingUser.status,
+      role:existingUser.role,
     };
 
     // Update user's refresh token and save it
