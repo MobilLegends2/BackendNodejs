@@ -231,6 +231,13 @@ function isRefreshTokenExpired(refreshToken) {
 }
 
 
+//////////////////////
+export const genarate = async (req, res) => {
+console.log(generateRandomPassword());
+res.status(200).json({ message: generateRandomPassword() });
+}
+///////////////////////////
+
 export const unlockSession = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -251,5 +258,138 @@ export const unlockSession = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error unlocking session.' });
+  }
+};
+
+function generateRandomPassword() {
+  const lowercaseLetters = 'abcdefghijklmnopqrstuvwxyz';
+  const uppercaseLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const numbers = '0123456789';
+  let pass = '';
+  // Concatenate all possible characters
+  const allCharacters = lowercaseLetters + uppercaseLetters + numbers;
+
+
+  // Ensure at least one lowercase letter, one uppercase letter, and one number
+  pass += getRandomCharacter(lowercaseLetters); // One lowercase letter
+  pass += getRandomCharacter(uppercaseLetters); // One uppercase letter
+  pass += getRandomCharacter(numbers); // One number
+
+  // Generate the remaining characters
+  for (let i = pass.length; i < 8; i++) {
+    pass += getRandomCharacter(allCharacters);
+  }
+
+  return pass;
+}
+
+function getRandomCharacter(characters) {
+  const randomIndex = Math.floor(Math.random() * characters.length);
+  return characters.charAt(randomIndex);
+}
+
+
+export const forgotPassword  = async (req, res) => {
+  try {
+    const { name } = req.body;
+
+    // Vérifiez si l'e-mail existe déjà dans la base de données
+    const existingUser = await User.findOne({ name });
+    const email = existingUser.email;
+const newpassword =generateRandomPassword();
+const hashedPassword = await bcrypt.hash(newpassword, 10);
+existingUser.password = hashedPassword;
+   await existingUser.save();
+    // Send welcome email
+    const mailOptions = {
+      from: 'your-email@gmail.com',
+      to: email,
+      subject: 'Password changed',
+      text: `your password have been changed , u can access to your account using this password ${newpassword} and u can changed later`,
+      html: `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Password Changed</title>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333333;
+          }
+          .wrapper {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border: 1px solid #dddddd;
+            border-radius: 5px;
+          }
+          .header {
+            background-color: #007bff;
+            color: #ffffff;
+            padding: 10px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+          }
+          .content {
+            padding: 20px;
+            text-align: left;
+            line-height: 1.5;
+          }
+          .footer {
+            font-size: 12px;
+            text-align: center;
+            padding: 15px;
+            background-color: #f4f4f4;
+            border-radius: 0 0 5px 5px;
+          }
+          .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="wrapper">
+          <div class="header">
+            <h2>Password Changed for ${name}</h2>
+          </div>
+          <div class="content">
+            <p>Your password has been changed successfully!</p>
+            <p>You can now access your account using the new password: <strong>${newpassword}</strong>.</p>
+            <p>You can change your password later.</p>
+          </div>
+          <div class="footer">
+            © 2024 Your App. All rights reserved.
+          </div>
+        </div>
+      </body>
+      </html>
+      `,
+     
+    };
+
+    transporter.sendMail(mailOptions, (emailError, info) => {
+      if (emailError) {
+        console.error(emailError);
+      } else {
+        console.log('Forget Password email sent: ' + info.response);
+      }
+    });
+    
+    res.status(201).json({ message: 'Passward changed successfully.' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error changin user password.' });
   }
 };
