@@ -1,58 +1,150 @@
+// Import necessary modules and middleware
 import express from "express";
 import mongoose from "mongoose";
 import morgan from "morgan";
 import cors from "cors";
 import { notFoundError, errorHandler } from "./middlewares/error-handler.js";
 import authRoutes from './routes/authRoutes.js';
+import sectionRoutes from './routes/section.js';
+import conversationRoutes from './routes/conversation.js';
+import messageRoutes from './routes/message.js';
+import voicemessageRoutes from './routes/voicemessage.js';
+import groupRoutes from './routes/group.js';
+import attachmentRoutes from './routes/attachment.js';
+import categoryRoutes from './routes/category.js';
+import userRoutes from './routes/users.js';
+import secretKeyRoutes from "./routes/secretKey.js";
+import applicationRoutes from "./routes/application.js";
+import http from 'http';
+import { Server } from 'socket.io';
+import Message from './models/message.js';
+import swaggerUi from 'swagger-ui-express';
+import YAML from 'yamljs';
 
-// Creating an express app
+
+const swaggerDocument = YAML.load('./swagger.yaml');
+import Conversation from './models/conversation.js'; // Import the Conversation model
+
+// Create express app and server
 const app = express();
+const server = http.createServer(app);
 
-// Setting the port number for the server (default to 9090 if not provided)
+// Use socket.io for server
+export const io = new Server(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST']
+  }
+});
+
+// Define PORT and database name
 const PORT = 9090 || process.env.PORT;
 
 // Specifying the MongoDB database name
-const databaseName = 'CrossCHat';
+const databaseName = 'CrossChat';
 
-// Enabling debug mode for mongoose
+// Connect to MongoDB
 mongoose.set('debug', true);
-
-// Setting the global Promise library
 mongoose.Promise = global.Promise;
 
 // Connecting to the MongoDB database
 try {
-  await mongoose.connect(`mongodb://127.0.0.1:27017/${databaseName}`);
+  await mongoose.connect(`mongodb+srv://CrossChat:CrossChat123@crosschat.ekjeexv.mongodb.net/${databaseName}`);
+ // await mongoose.connect(`mongodb://localhost:27017/${databaseName}`);
+  
   console.log(`Connected to ${databaseName}`);
 } catch (error) {
   console.error(error);
 }
 
-// Enabling Cross-Origin Resource Sharing
+app.use(cors()); // Enable CORS middleware
+
+
+// Middleware setup
 app.use(cors());
-
-// Using morgan for logging HTTP requests
-app.use(morgan('dev')); 
-
-// Parsing JSON request bodies
+app.use(morgan('dev'));
 app.use(express.json());
-
-// Parsing URL-encoded request bodies with extended format
 app.use(express.urlencoded({ extended: true }));
-
-// Serving static files (images) from the 'public/images' directory
 app.use('/img', express.static('public/images'));
 
-// Importing the routes for the 'tests' resource
+// Serve the Swagger UI with your OpenAPI specification
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
+// Routes setup
 app.use('/api/auth', authRoutes);
+app.use('/category', categoryRoutes);
+app.use('/section', sectionRoutes);
+app.use('/user', userRoutes);
+app.use('/applications', applicationRoutes);
+app.use('/token', secretKeyRoutes);
 
 // Using custom middleware for handling 404 errors
+app.use('/', attachmentRoutes);
+app.use('/', groupRoutes);
+app.use('/', conversationRoutes);
+app.use('/', messageRoutes);
+app.use('/', voicemessageRoutes);
 app.use(notFoundError);
+app.use(errorHandler);
 
-// Using custom middleware for handling general errors
-app.use(errorHandler); 
+// Socket.io connection setup
+io.on('connection', (socket) => {
+  console.log('a user connected');
 
-// Starting the server and listening on the specified port
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+  socket.on('disconnect', () => {
+    console.log('user disconnected');
+  });
+
+  // Dynamic event handling based on conversation ID
+  socket.on('join_conversation', (conversationId) => {
+    console.log(`Joined conversation ${conversationId}`);
+
+    // Define event name based on conversation ID
+    const eventName = `new_message_${conversationId}`;
+
+    // Listen for new messages specific to this conversation
+    socket.on(eventName, async (messageData) => {
+      console.log(`New message in conversation ${conversationId}:`, messageData);
+      try {
+
+        // Save the message to the database
+
+
+        // Now, when saving the message, format the timestamp to include only hour and minute
+        const currentTime = new Date();
+        const formattedTime = `${currentTime.getHours().toString().padStart(2, '0')}:${currentTime.getMinutes().toString().padStart(2, '0')}`;
+
+        const message = new Message({
+          sender: messageData.sender,
+          content: messageData.content,
+          conversation: messageData.conversation,
+          timestamp: formattedTime, // Use formatted timestamp
+          seenBy: [messageData.sender], // Add sender to seenBy array,,
+          type: messageData.type
+
+        });
+        await message.save();
+
+        // Update conversation with new message
+        await Conversation.updateOne(
+          { _id: messageData.conversation },
+          { $push: { messages: message._id } }
+        );
+
+        // Emit the message to other sockets with formatted timestamp
+        io.emit(eventName, {
+          ...messageData,
+          conversation: messageData.conversation,
+          timestamp: formattedTime, // Use formatted timestamp
+        });
+      } catch (error) {
+        console.error(`Error saving message in conversation ${conversationId}:`, error);
+      }
+    });
+  });
+});
+
+// Start the server
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
