@@ -34,15 +34,16 @@ const verifySecretKey = async (req, res, next) => {
 */
 const verifySecretKey = async (req, res, next) => {
   try {
+    console.log(req.headers)
     // Extract the secret key from the request headers
     const secretKey = req.headers['x-secret-key'];
-    
+    console.log(secretKey)
     // Find all applications
     const applications = await Application.find();
     
     // Check if any application's secret key matches the provided secret key
-    //const validSecretKey = applications.some(application => application.secretKey === secretKey);
-    const validSecretKey = true;
+    const validSecretKey = applications.some(application => application.secretKey === secretKey);
+    //const validSecretKey = true;
 
     if (!validSecretKey) {
       return res.status(403).json({ message: 'Forbidden: Invalid secret key' });

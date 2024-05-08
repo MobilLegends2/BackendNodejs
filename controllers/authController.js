@@ -510,6 +510,7 @@ export const loginWithOutlook = async (req, res) => {
         password: decodedToken.sub, // You may need to handle the password differently for Google sign-in
         status: 'busy',
         avatar: 'brian-hughes.jpg',
+        
       }); // Assurez-vous que l'identifiant de l'utilisateur est correctement défini
       // Ajoutez d'autres champs utilisateur nécessaires
 
@@ -532,6 +533,7 @@ export const loginWithOutlook = async (req, res) => {
       email: existingUser.email,
       avatar: existingUser.avatar,
       status: existingUser.status,
+      role: existingUser.role
       // Ajoutez d'autres champs utilisateur que vous souhaitez envoyer au client
     };
 
