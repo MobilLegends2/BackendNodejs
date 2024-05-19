@@ -29,7 +29,7 @@ export async function createApplication(req, res) {
       const secretKey = generateSecretKey();
 
       // Create the application using the Application model
-      const application = await Application.create({ name, logo, userId, secretKey, etat: true, languageOfDevelopment });
+      const application = await Application.create({ name, logo, user, secretKey, etat: true, languageOfDevelopment });
 
       // Email setup
       const transporter = nodemailer.createTransport({
